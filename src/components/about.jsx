@@ -199,7 +199,7 @@ export const About = (props) => {
               }}
             >
               <img 
-                src="img/about.png" 
+                src={`${process.env.PUBLIC_URL}/img/about.png`} 
                 style={imageStyle}
                 alt="About us - CSE Department team" 
               />

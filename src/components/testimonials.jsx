@@ -275,6 +275,14 @@ export const Testimonials = (props) => {
     );
   }
 
+  const getImageUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http") || url.startsWith("data:") || url.startsWith("/")) {
+      return url;
+    }
+    return `${process.env.PUBLIC_URL}/${url}`;
+  };
+
   const currentImage = images[currentIndex];
 
   return (
@@ -293,7 +301,7 @@ export const Testimonials = (props) => {
           {/* Main Image Display */}
           <div style={mainImageContainerStyle}>
             <img
-              src={currentImage.original || currentImage.url}
+              src={getImageUrl(currentImage.original || currentImage.url)}
               alt={currentImage.description || `Gallery image ${currentIndex + 1}`}
               style={imageStyle}
               onError={(e) => {
@@ -381,7 +389,7 @@ export const Testimonials = (props) => {
                   }}
                 >
                   <img
-                    src={image.thumbnail || image.original || image.url}
+                    src={getImageUrl(image.thumbnail || image.original || image.url)}
                     alt={`Thumbnail ${index + 1}`}
                     style={thumbnailImageStyle}
                     onError={(e) => {
