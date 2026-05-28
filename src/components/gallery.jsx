@@ -2,7 +2,7 @@ import { Image } from "./image";
 import React, { useEffect, useRef, useState } from "react";
 import Zoom from 'react-reveal/Zoom';
 
-export const Gallery = () => {
+export const Gallery = (props) => {
   const [inView, setInView] = useState(false);
   const [data, setData] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState('all');
@@ -26,6 +26,11 @@ export const Gallery = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (props.data && props.data.length > 0) {
+        setData(props.data);
+        setIsLoading(false);
+        return;
+      }
       try {
         const response = await fetch('http://localhost:3000/events');
         const result = await response.json();
@@ -37,7 +42,7 @@ export const Gallery = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [props.data]);
 
   // Filter events based on selection
   const filteredEvents = data?.filter(event => {
@@ -45,6 +50,14 @@ export const Gallery = () => {
     // Add your filtering logic here based on event type, date, etc.
     return event.category === selectedFilter;
   });
+
+  const getImageUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http") || url.startsWith("data:") || url.startsWith("/")) {
+      return url;
+    }
+    return `${process.env.PUBLIC_URL}/${url}`;
+  };
 
   const containerStyle = {
     padding: "100px 0",
@@ -322,12 +335,12 @@ export const Gallery = () => {
                 >
                   <div style={imageContainerStyle}>
                     <img 
-                      src={d.url} 
-                      alt={d.event_name}
+                      src={getImageUrl(d.url || d.Image)} 
+                      alt={d.event_name || d.title}
                       className="event-image"
                       style={imageStyle}
                       onError={(e) => {
-                        e.target.src = `https://via.placeholder.com/400x250/3b82f6/ffffff?text=${encodeURIComponent(d.event_name)}`;
+                        e.target.src = `https://via.placeholder.com/400x250/3b82f6/ffffff?text=${encodeURIComponent(d.event_name || d.title)}`;
                       }}
                     />
                     <div className="image-overlay" style={overlayStyle}>
@@ -339,7 +352,7 @@ export const Gallery = () => {
                   
                   <div style={contentStyle}>
                     <div>
-                      <h3 style={titleCardStyle}>{d.event_name}</h3>
+                      <h3 style={titleCardStyle}>{d.event_name || d.title}</h3>
                       <p style={dateStyle}>
                         {d.date || 'Coming Soon'}
                       </p>

@@ -1,7 +1,7 @@
 import Zoom from 'react-reveal/Zoom';
 import React, { useEffect, useRef, useState } from "react";
 
-export const Team = () => {
+export const Team = (props) => {
   const [inView, setInView] = useState(false);
   const [data, setData] = useState(null);
   const galleryRef = useRef(null);
@@ -23,6 +23,10 @@ export const Team = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (props.data && props.data.length > 0) {
+        setData(props.data);
+        return;
+      }
       try {
         const response = await fetch('http://localhost:3000/teams');
         const result = await response.json();
@@ -32,7 +36,15 @@ export const Team = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [props.data]);
+
+  const getImageUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http") || url.startsWith("data:") || url.startsWith("/")) {
+      return url;
+    }
+    return `${process.env.PUBLIC_URL}/${url}`;
+  };
 
   const containerStyle = {
     padding: "80px 20px",
@@ -199,7 +211,7 @@ export const Team = () => {
 
                   <div style={imageContainerStyle}>
                     <img 
-                      src={d.url} 
+                      src={getImageUrl(d.url || d.img)} 
                       alt={d.name} 
                       className="team-image"
                       style={imageStyle}
@@ -211,7 +223,7 @@ export const Team = () => {
 
                   <div>
                     <h3 style={nameStyle}>{d.name}</h3>
-                    <p style={positionStyle}>{d.pos}</p>
+                    <p style={positionStyle}>{d.pos || d.job}</p>
                   </div>
                 </div>
               ))}

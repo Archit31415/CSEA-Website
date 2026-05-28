@@ -24,3 +24,5 @@ yarn-error.log*
 
 backend/.env
 src/msalConfig.js
+
+GEMINI.md
