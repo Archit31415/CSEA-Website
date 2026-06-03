@@ -10,54 +10,73 @@
   "Gallery": [
     {
       "title": "Freshers 2024",
-      "Image": "img/portfolio/Freshers_24.jpg"
-      
+      "Image": "img/portfolio/Freshers_24.jpg",
+      "category": "social",
+      "status": "past",
+      "date": "2024"
     },
     {
       "title": "Freshers 2024",
-      "Image": "img/portfolio/Freshers_24_1.jpeg"
-      
+      "Image": "img/portfolio/Freshers_24_1.jpeg",
+      "category": "social",
+      "status": "past",
+      "date": "2024"
     },
     {
       "title": "Freshers 2024",
-      "Image": "img/portfolio/Freshers_24_2.jpeg"
-      
+      "Image": "img/portfolio/Freshers_24_2.jpeg",
+      "category": "social",
+      "status": "past",
+      "date": "2024"
     },
     {
       "title": "4th Sem Acad Talk",
-      "Image": "img/portfolio/second_sem_acad.jpeg"
-      
+      "Image": "img/portfolio/second_sem_acad.jpeg",
+      "category": "academic",
+      "status": "past",
+      "date": "2024"
     },
     {
       "title": "CP-101 2024",
-      "Image": "img/portfolio/cp101.jpeg"
-      
+      "Image": "img/portfolio/cp101.jpeg",
+      "category": "academic",
+      "status": "past",
+      "date": "2024"
     },
     {
       "title": "CP Lecture",
-      "Image": "img/portfolio/cp_lec.jpg"
-      
+      "Image": "img/portfolio/cp_lec.jpg",
+      "category": "academic",
+      "status": "past",
+      "date": "2024"
     },
     {
       "title": "TT Tournament",
-      "Image": "img/portfolio/tt.jpg"
-      
+      "Image": "img/portfolio/tt.jpg",
+      "category": "social",
+      "status": "past",
+      "date": "2024"
     },
     {
       "title": "TT Tournament",
-      "Image": "img/portfolio/tt2.jpg"
-     
+      "Image": "img/portfolio/tt2.jpg",
+      "category": "social",
+      "status": "past",
+      "date": "2024"
     },
     {
       "title": "Talk By John Jose",
-      "Image": "img/portfolio/jj.jpg"
-      
+      "Image": "img/portfolio/jj.jpg",
+      "category": "academic",
+      "status": "past",
+      "date": "2024"
     },
-
     {
       "title": "Second Sem Acad Talk",
-      "Image": "img/portfolio/2ndsem.jpeg"
-      
+      "Image": "img/portfolio/2ndsem.jpeg",
+      "category": "academic",
+      "status": "past",
+      "date": "2024"
     }
   ],
   

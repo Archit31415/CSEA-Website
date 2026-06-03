@@ -47,7 +47,8 @@ export const Gallery = (props) => {
   // Filter events based on selection
   const filteredEvents = data?.filter(event => {
     if (selectedFilter === 'all') return true;
-    // Add your filtering logic here based on event type, date, etc.
+    if (selectedFilter === 'past') return event.status === 'past';
+    if (selectedFilter === 'upcoming') return event.status === 'upcoming';
     return event.category === selectedFilter;
   });
 
