@@ -16,24 +16,24 @@ const App = () => {
         <Route path="/cseatemp/" element={<Home />}/>
 
         {/* Student page route */}
-        <Route element={<ProtectedRoute />}>
+        {/* <Route element={<ProtectedRoute />}> */}
         <Route path="/cseatemp/student" element={<Student />} />
-        </Route>
+        {/* </Route> */}
 
         {/* Intern page route */}
-        <Route element={<ProtectedRoute />}>
+        {/* <Route element={<ProtectedRoute />}> */}
         <Route path="/cseatemp/student/intern" element={<Intern />} />
-        </Route>
+        {/* </Route> */}
 
         {/* Resource page route */}
-        <Route element={<ProtectedRoute />}>
+        {/* <Route element={<ProtectedRoute />}> */}
         <Route path="/cseatemp/student/resource" element={<Resource />} />
-        </Route>
+        {/* </Route> */}
 
         {/* Resource page route */}
-        <Route element={<ProtectedRoute />}>
+        {/* <Route element={<ProtectedRoute />}> */}
         <Route path="/cseatemp/student/sail" element={<SAIL />} />
-        </Route>
+        {/* </Route> */}
         
       </Routes>
     </Router>
