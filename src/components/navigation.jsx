@@ -1,7 +1,16 @@
 import React from "react";
+import { useLocation } from "react-router-dom";
 import { Login } from "./Login";
 
 export const Navigation = (props) => {
+  const location = useLocation();
+  const path = location.pathname;
+
+  const isHome = path === "/cseatemp" || path === "/cseatemp/";
+  const isEvents = path === "/cseatemp/events" || path === "/cseatemp/events/";
+  const isGallery = path === "/cseatemp/gallery" || path === "/cseatemp/gallery/";
+  const isTeam = path === "/cseatemp/team" || path === "/cseatemp/team/";
+
   return (
     <nav id="menu" className="navbar navbar-default navbar-fixed-top">
       <div className="container">
@@ -18,7 +27,7 @@ export const Navigation = (props) => {
             <span className="icon-bar"></span>{" "}
             <span className="icon-bar"></span>{" "}
           </button>
-          <a className="navbar-brand page-scroll" href="#page-top">
+          <a className="navbar-brand page-scroll" href={isHome ? "#page-top" : "/cseatemp/"}>
             Welcome
           </a>{" "}
         </div>
@@ -30,27 +39,27 @@ export const Navigation = (props) => {
           <ul className="nav navbar-nav navbar-right">
            
             <li>
-              <a href="#about" className="page-scroll">
+              <a href={isHome ? "#about" : "/cseatemp/#about"} className="page-scroll">
                 About
               </a>
             </li>
             <li>
-              <a href="#portfolio" className="page-scroll">
+              <a href={isEvents ? "#portfolio" : "/cseatemp/events"} className="page-scroll">
                Events
               </a>
             </li>
             <li>
-              <a href="#testimonials" className="page-scroll">
+              <a href={isGallery ? "#testimonials" : "/cseatemp/gallery"} className="page-scroll">
                 Gallery
               </a>
             </li>
             <li>
-              <a href="#team" className="page-scroll">
+              <a href={isTeam ? "#team" : "/cseatemp/team"} className="page-scroll">
                 Team
               </a>
             </li>
             <li>
-              <a href="#contact" className="page-scroll">
+              <a href={isHome ? "#contact" : "/cseatemp/#contact"} className="page-scroll">
                 Contact
               </a>
             </li>
