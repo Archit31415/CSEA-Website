@@ -17,14 +17,14 @@ export const InternExp = () => {
 
   // Drive links for each year
   const driveLinks = {
-    2025: "https://drive.google.com/drive/folders/2025",
-    2024: "https://drive.google.com/drive/folders/2024",
-    2023: "https://drive.google.com/drive/folders/2023",
-    2022: "https://drive.google.com/drive/folders/2022",
-    2021: "https://drive.google.com/drive/folders/2021",
-    2020: "https://drive.google.com/drive/folders/2020",
-    2019: "https://drive.google.com/drive/folders/2019",
-    2018: "https://drive.google.com/drive/folders/2018",
+    2025: "https://drive.google.com/drive/folders/1vpf-OqbL1wvY1NRL6yb1l1bzusAcIBjn?usp=sharing",
+    2024: "https://drive.google.com/drive/folders/1q8dF18Rk7-JGjVsbsOn-uXzuyXYS7YUZ?usp=sharing",
+    2023: "https://drive.google.com/drive/folders/1VOMxD88v-SQV__DewOd8T5k1kXSvfmN4?usp=sharing",
+    2022: "https://drive.google.com/drive/folders/1KGNEj3gpQQ4UIEqK0FkSSkYj5TrSb1D7",
+    2021: "https://drive.google.com/drive/folders/1wgNPnUxfxTNG2JjihUaERI_SMZBQnmVY",
+    2020: "https://drive.google.com/drive/folders/1INL84qYF7lwFivV9urmBJrFTlDa-I3ze?usp=drive_link",
+    2019: "https://drive.google.com/drive/folders/1lxf6cG6F4Zmsu4YpAOFcTiTY39-5CVwD?usp=drive_link",
+    2018: "https://drive.google.com/drive/folders/15_ZrVYKY2nGNn8Q6UrELIUwygOgI-0BI?usp=drive_link",
   };
 
   const handleYearClick = (year) => {

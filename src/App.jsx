@@ -2,6 +2,9 @@ import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Student from "./login/Home";
 import Home from "./components/Home";
+import EventsPage from "./components/EventsPage";
+import GalleryPage from "./components/GalleryPage";
+import TeamPage from "./components/TeamPage";
 import Intern from "./login/Intern";
 import Resource from "./login/Resources";
 import SAIL from "./login/SAIL";
@@ -14,6 +17,11 @@ const App = () => {
       <Routes>
         {/* Main landing page route */}
         <Route path="/cseatemp/" element={<Home />}/>
+
+        {/* New sub-pages */}
+        <Route path="/cseatemp/events" element={<EventsPage />} />
+        <Route path="/cseatemp/gallery" element={<GalleryPage />} />
+        <Route path="/cseatemp/team" element={<TeamPage />} />
 
         {/* Student page route */}
         {/* <Route element={<ProtectedRoute />}> */}

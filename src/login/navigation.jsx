@@ -33,11 +33,6 @@ export const Navigation = (props) => {
               </Link>
             </li>
             <li>
-              <Link to="/cseatemp/student/resource" className="page-scroll">
-                Resources
-              </Link>
-            </li>
-            <li>
               <Link to="/cseatemp/student/sail" className="page-scroll">
                 SAIL
               </Link>
