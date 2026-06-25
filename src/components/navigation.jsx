@@ -10,6 +10,7 @@ export const Navigation = (props) => {
   const isEvents = path === "/cseatemp/events" || path === "/cseatemp/events/";
   const isGallery = path === "/cseatemp/gallery" || path === "/cseatemp/gallery/";
   const isTeam = path === "/cseatemp/team" || path === "/cseatemp/team/";
+  const isGames = path.startsWith("/cseatemp/games");
 
   return (
     <nav id="menu" className="navbar navbar-default navbar-fixed-top">
@@ -56,6 +57,11 @@ export const Navigation = (props) => {
             <li>
               <a href={isTeam ? "#team" : "/cseatemp/team"} className="page-scroll">
                 Team
+              </a>
+            </li>
+            <li className={isGames ? "active" : ""}>
+              <a href="/cseatemp/games" className="page-scroll">
+                Games
               </a>
             </li>
             <li>

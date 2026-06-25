@@ -5,6 +5,7 @@ import Home from "./components/Home";
 import EventsPage from "./components/EventsPage";
 import GalleryPage from "./components/GalleryPage";
 import TeamPage from "./components/TeamPage";
+import GamesPage from "./components/GamesPage";
 import Intern from "./login/Intern";
 import Resource from "./login/Resources";
 import SAIL from "./login/SAIL";
@@ -22,6 +23,7 @@ const App = () => {
         <Route path="/cseatemp/events" element={<EventsPage />} />
         <Route path="/cseatemp/gallery" element={<GalleryPage />} />
         <Route path="/cseatemp/team" element={<TeamPage />} />
+        <Route path="/cseatemp/games" element={<GamesPage />} />
 
         {/* Student page route */}
         {/* <Route element={<ProtectedRoute />}> */}
