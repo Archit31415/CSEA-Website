@@ -19,6 +19,9 @@ const eventSchema = new mongoose.Schema({
     },
     date: {
         type: String
+    },
+    registrationLink: {
+        type: String
     }
 });
 

@@ -119,7 +119,7 @@ export const Gallery = (props) => {
 
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
     gap: "32px",
     maxWidth: "1400px",
     margin: "0 auto",

@@ -36,7 +36,8 @@ router.post('/', async (req, res) => {
         event_name: req.body.event_name,
         status: status,
         category: req.body.category,
-        date: req.body.date
+        date: req.body.date,
+        registrationLink: req.body.registrationLink
     });
 
     try {
