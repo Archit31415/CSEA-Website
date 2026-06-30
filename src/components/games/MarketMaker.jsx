@@ -281,6 +281,28 @@ export const MarketMaker = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, botCenter, currentSpread, cash, inventory]);
 
+  // Cleanup timers on component unmount
+  useEffect(() => {
+    return () => {
+      if (gameTimerRef.current) clearInterval(gameTimerRef.current);
+      if (simTimerRef.current) clearInterval(simTimerRef.current);
+    };
+  }, []);
+
+  // Monitor countdown timer to settle the round when it hits 0
+  useEffect(() => {
+    if (gameState === GAME_STATE.PLAYING && timeRemaining === 0) {
+      if (gameTimerRef.current) clearInterval(gameTimerRef.current);
+      if (simTimerRef.current) clearInterval(simTimerRef.current);
+      
+      const currentQ = questions[round - 1];
+      if (currentQ) {
+        settleRound(currentQ.answer, currentQ);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRemaining, gameState, round, questions]);
+
   const startNewGame = () => {
     const selected = generateDynamicQuestions();
     setQuestions(selected);
@@ -334,8 +356,6 @@ export const MarketMaker = () => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(gameTimerRef.current);
-          clearInterval(simTimerRef.current);
-          settleRound(trueAns, currentQ);
           return 0;
         }
         return prev - 1;
@@ -352,29 +372,28 @@ export const MarketMaker = () => {
   const settleRound = (trueAns, currentQ) => {
     setGameState(GAME_STATE.ROUND_END);
     
-    setInventory((prevInventory) => {
-      setCash((prevCash) => {
-        const valueSettled = prevInventory * trueAns;
-        const finalCash = prevCash + valueSettled;
-        const profit = finalCash - (roundHistory.length > 0 ? roundHistory[roundHistory.length - 1].settledCash : STARTING_CASH);
-        
-        setRoundHistory((prevHist) => [
-          ...prevHist,
-          {
-            round: round,
-            question: currentQ.question,
-            trueAnswer: trueAns,
-            finalInventory: prevInventory,
-            startingCash: roundHistory.length > 0 ? roundHistory[roundHistory.length - 1].settledCash : STARTING_CASH,
-            settledCash: finalCash,
-            profit: profit
-          }
-        ]);
-        
-        return finalCash;
-      });
-      return 0; // Settles position to 0
-    });
+    const valueSettled = inventory * trueAns;
+    const finalCash = cash + valueSettled;
+    const prevSettledCash = roundHistory.length > 0 
+      ? roundHistory[roundHistory.length - 1].settledCash 
+      : STARTING_CASH;
+    const profit = finalCash - prevSettledCash;
+    
+    setRoundHistory((prevHist) => [
+      ...prevHist,
+      {
+        round: round,
+        question: currentQ.question,
+        trueAnswer: trueAns,
+        finalInventory: inventory,
+        startingCash: prevSettledCash,
+        settledCash: finalCash,
+        profit: profit
+      }
+    ]);
+    
+    setCash(finalCash);
+    setInventory(0);
   };
 
   const nextRound = () => {
