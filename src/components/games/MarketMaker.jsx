@@ -244,6 +244,8 @@ export const MarketMaker = () => {
   const [highScore, setHighScore] = useState(() => {
     return parseInt(localStorage.getItem("csea_market_maker_high_score") || "0", 10);
   });
+  const [onboardingTab, setOnboardingTab] = useState("goal");
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   const gameTimerRef = useRef(null);
   const simTimerRef = useRef(null);
@@ -263,6 +265,18 @@ export const MarketMaker = () => {
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowHelpModal((prevOpen) => {
+          if (prevOpen) {
+            return false;
+          } else {
+            // Cancel active limit orders if modal isn't open
+            cancelLimitOrders();
+            return false;
+          }
+        });
+      }
       if (gameState !== GAME_STATE.PLAYING) return;
       const key = e.key.toLowerCase();
       if (key === "b" && e.target.tagName !== "INPUT") {
@@ -771,21 +785,112 @@ export const MarketMaker = () => {
         <div className="mm-start-screen">
           <span className="game-icon">📊</span>
           <h3>CSEA Market Maker</h3>
-          <p>
-            Welcome to the trading desk! You will participate in <b>5 rounds</b> of estimation contracts.
-            For each round, you trade an asset whose contract settlement price is the <b>true numerical answer</b> to the question.
+          <p className="mm-start-subtitle">
+            A fast-paced quantitative trading game. Trade contracts against bots based on mathematical estimations and lock in profits.
           </p>
 
-          <div className="mm-rules-box">
-            <h4>Trading Rules:</h4>
-            <ul>
-              <li>Start with <b>$1,000 cash</b>. Settle positions to capture profit.</li>
-              <li><b>Market Buy/Sell</b>: Instantly fill at top Ask (red) or top Bid (green).</li>
-              <li><b>Make Market</b>: Set a Limit Bid and Limit Ask. Bots will trade with your limits if they cross bot valuations.</li>
-              <li><b>Hints</b> arrive at 60s and 30s remaining, making bots converge to the answer.</li>
-              <li><b>Adverse Selection</b>: Make sure you don't keep stale limit quotes when new hints leak!</li>
-              <li><b>Risk Management</b>: Position limit is <b>±15 contracts max</b>.</li>
-            </ul>
+          <div className="mm-onboarding-container">
+            <div className="mm-onboarding-tabs">
+              <button
+                type="button"
+                className={`mm-onboarding-tab-btn ${onboardingTab === "goal" ? "active" : ""}`}
+                onClick={() => setOnboardingTab("goal")}
+              >
+                🎯 1. The Goal
+              </button>
+              <button
+                type="button"
+                className={`mm-onboarding-tab-btn ${onboardingTab === "trading" ? "active" : ""}`}
+                onClick={() => setOnboardingTab("trading")}
+              >
+                🔄 2. How to Trade
+              </button>
+              <button
+                type="button"
+                className={`mm-onboarding-tab-btn ${onboardingTab === "intel" ? "active" : ""}`}
+                onClick={() => setOnboardingTab("intel")}
+              >
+                💡 3. Hints & Bots
+              </button>
+              <button
+                type="button"
+                className={`mm-onboarding-tab-btn ${onboardingTab === "risk" ? "active" : ""}`}
+                onClick={() => setOnboardingTab("risk")}
+              >
+                ⚖️ 4. Risk & Limits
+              </button>
+            </div>
+
+            <div className="mm-onboarding-content">
+              {onboardingTab === "goal" && (
+                <div className="mm-onboarding-pane">
+                  <h4>🎯 The Basic Goal</h4>
+                  <p>
+                    You are trading contracts of an asset. The <b>True Value</b> of each contract is the exact numerical answer to a math/probability question.
+                  </p>
+                  <div className="onboarding-example-box">
+                    <h5>💡 Profit Example:</h5>
+                    <p>
+                      Suppose the question's true answer is <b>120</b>:
+                    </p>
+                    <ul>
+                      <li>If you <b>Buy</b> contracts below 120 (e.g. at <b>$100</b>), you make <b>+$20 profit</b> per contract at settlement!</li>
+                      <li>If you <b>Sell</b> contracts above 120 (e.g. at <b>$135</b>), you make <b>+$15 profit</b> per contract at settlement!</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {onboardingTab === "trading" && (
+                <div className="mm-onboarding-pane">
+                  <h4>🔄 Order Types (How to Trade)</h4>
+                  <p>
+                    You can trade with the market makers (bots) in two different ways:
+                  </p>
+                  <div className="onboarding-split-grid">
+                    <div className="onboarding-column">
+                      <h5>⚡ Market Orders (Instant)</h5>
+                      <p>
+                        Click <b>Mkt Buy</b> or <b>Mkt Sell</b> to trade instantly at the bots' current prices.
+                      </p>
+                      <span className="onboarding-badge info">Fast but expensive (pays the spread)</span>
+                    </div>
+                    <div className="onboarding-column">
+                      <h5>📈 Limit Orders (Market Making)</h5>
+                      <p>
+                        Type a price and post a <b>Limit Bid</b> (buy) or <b>Limit Ask</b> (sell). Your quotes will sit in the Order Book.
+                      </p>
+                      <span className="onboarding-badge success">Slower but gets better prices!</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {onboardingTab === "intel" && (
+                <div className="mm-onboarding-pane">
+                  <h4>💡 Hints & Bot Strategy</h4>
+                  <p>
+                    Bots trade based on estimation. At the start of the round, they quote wide prices because they are uncertain.
+                  </p>
+                  <ul>
+                    <li><b>Hints Arrive:</b> At <b>T-60s</b> and <b>T-30s</b>, hints about the true answer are revealed.</li>
+                    <li><b>Convergence:</b> With each hint, bots update their prices to get closer and closer to the true answer.</li>
+                    <li><b>⚠️ Adverse Selection (Stale Quote Risk):</b> When a new hint drops, bots will instantly trade against any old Limit Orders you left in the book. <b>Cancel/update your limits quickly (Press [C] or Esc)</b>!</li>
+                  </ul>
+                </div>
+              )}
+
+              {onboardingTab === "risk" && (
+                <div className="mm-onboarding-pane">
+                  <h4>⚖️ Inventory & Risk Management</h4>
+                  <ul>
+                    <li><b>Inventory:</b> Your position in contracts. Buying increases it (`+`), selling decreases it (`-`).</li>
+                    <li><b>Risk Limit:</b> You can hold a maximum of <b>±15 contracts</b>. Managing this inventory risk is crucial so you don't get stuck at the limit!</li>
+                    <li><b>Round Settlement:</b> When the 90s timer hits zero, the round ends. Your final inventory is automatically bought/sold at the <b>True Answer</b> price, and your final cash is updated.</li>
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="game-stats">
@@ -806,11 +911,16 @@ export const MarketMaker = () => {
               <span className="mm-live-indicator">● LIVE</span>
               <span>Round {round}/5</span>
             </div>
-            <div className="mm-timer-box">
-              <span className="mm-timer-label">Time to Settlement:</span>
-              <span className={`mm-timer-digits ${timeRemaining <= 10 ? "red-alert" : ""}`}>
-                {timeRemaining}s
-              </span>
+            <div className="mm-header-controls">
+              <button type="button" className="btn-help-trigger" onClick={() => setShowHelpModal(true)}>
+                ❓ How to Play
+              </button>
+              <div className="mm-timer-box">
+                <span className="mm-timer-label">Time to Settlement:</span>
+                <span className={`mm-timer-digits ${timeRemaining <= 10 ? "red-alert" : ""}`}>
+                  {timeRemaining}s
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1119,6 +1229,41 @@ export const MarketMaker = () => {
             <button className="btn-game-secondary" onClick={handleShare}>
               Share Performance
             </button>
+          </div>
+        </div>
+      )}
+
+      {showHelpModal && (
+        <div className="mm-help-overlay" onClick={() => setShowHelpModal(false)}>
+          <div className="mm-help-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="mm-help-header">
+              <h4>📊 Market Maker Cheat Sheet</h4>
+              <button type="button" className="mm-help-close-btn" onClick={() => setShowHelpModal(false)}>&times;</button>
+            </div>
+            <div className="mm-help-content">
+              <div className="help-section">
+                <h5>Keyboard Controls (Hotkeys)</h5>
+                <ul className="help-hotkeys">
+                  <li><span className="key-badge">B</span> Market Buy (Instant)</li>
+                  <li><span className="key-badge">S</span> Market Sell (Instant)</li>
+                  <li><span className="key-badge">C</span> Cancel active Limit Orders</li>
+                  <li><span className="key-badge">Esc</span> Close help / Cancel active Limit Orders</li>
+                </ul>
+              </div>
+              <div className="help-section">
+                <h5>Trading Strategy</h5>
+                <ul>
+                  <li><b>True Value:</b> The exact numerical answer to the question.</li>
+                  <li><b>Mid Price:</b> The average price between best Bid (Buy price) and Ask (Sell price).</li>
+                  <li><b>Spread:</b> Difference between Ask and Bid. Narrower spreads mean tighter trading.</li>
+                  <li><b>Adverse Selection:</b> Cancel your limit orders before T-60s and T-30s so bots don't pick off your stale quotes when new hints are revealed!</li>
+                  <li><b>Inventory:</b> You can hold at most <b>±15 contracts</b>. If you hit this limit, you must trade in the opposite direction to reduce risk.</li>
+                </ul>
+              </div>
+            </div>
+            <div className="mm-help-footer">
+              <button type="button" className="btn-game-primary" onClick={() => setShowHelpModal(false)}>Resume Trading</button>
+            </div>
           </div>
         </div>
       )}
