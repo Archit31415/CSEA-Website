@@ -17,7 +17,7 @@ export const Navigation = (props) => {
             <span className="icon-bar"></span>{" "}
             <span className="icon-bar"></span>{" "}
           </button>
-          <Link className="navbar-brand page-scroll" to="/">
+          <Link className="navbar-brand page-scroll" to="/cseatemp/student">
             CSEA | Student Corner
           </Link>{" "}
         </div>
@@ -27,6 +27,11 @@ export const Navigation = (props) => {
           id="bs-example-navbar-collapse-1"
         >
           <ul className="nav navbar-nav navbar-right">
+            <li>
+              <Link to="/cseatemp/" className="page-scroll">
+                Home
+              </Link>
+            </li>
             <li>
               <Link to="/cseatemp/student/intern" className="page-scroll">
                 Intern

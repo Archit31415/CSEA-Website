@@ -33,15 +33,23 @@ mongoose
   });
 
 // MSAL Configuration
-const msalConfig = {
-  auth: {
-    clientId: process.env.CLIENT_ID, // Replace with your Azure AD app's client ID
-    authority: `https://login.microsoftonline.com/${process.env.TENANT_ID}`, // Replace with your tenant ID
-    clientSecret: process.env.CLIENT_SECRET, // Replace with your Azure AD app's client secret
-  },
-};
+const hasMsalCreds = process.env.CLIENT_ID && process.env.TENANT_ID && process.env.CLIENT_SECRET;
+let msalInstance;
 
-const msalInstance = new ConfidentialClientApplication(msalConfig);
+if (hasMsalCreds) {
+  const msalConfig = {
+    auth: {
+      clientId: process.env.CLIENT_ID, // Replace with your Azure AD app's client ID
+      authority: `https://login.microsoftonline.com/${process.env.TENANT_ID}`, // Replace with your tenant ID
+      clientSecret: process.env.CLIENT_SECRET, // Replace with your Azure AD app's client secret
+    },
+  };
+  msalInstance = new ConfidentialClientApplication(msalConfig);
+} else {
+  console.warn(
+    "WARNING: Azure AD authentication environment variables (CLIENT_ID, TENANT_ID, CLIENT_SECRET) are missing. /login and /redirect routes will not function."
+  );
+}
 
 // Configure session middleware
 app.use(
@@ -54,6 +62,10 @@ app.use(
 
 // Login route
 app.get("/login", (req, res) => {
+  if (!msalInstance) {
+    return res.status(500).send("Azure AD authentication is not configured on this server (missing environment variables).");
+  }
+
   // Store the original URL in the session
   req.session.redirectTo = "http://localhost:3001/cseatemp/student";
 
@@ -74,6 +86,10 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/redirect", async (req, res) => {
+  if (!msalInstance) {
+    return res.status(500).send("Azure AD authentication is not configured on this server (missing environment variables).");
+  }
+
   try {
     const tokenResponse = await msalInstance.acquireTokenByCode({
       scopes: ["User.Read"],

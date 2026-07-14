@@ -16,6 +16,9 @@
     "express-session": "^1.18.1",
     "mongoose": "^8.4.4"
   },
+  "overrides": {
+    "jwa": "2.0.1"
+  },
   "keywords": [],
   "description": ""
 }

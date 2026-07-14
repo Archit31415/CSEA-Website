@@ -45,12 +45,29 @@ export const Gallery = (props) => {
   }, [props.data]);
 
   // Filter events based on selection
-  const filteredEvents = data?.filter(event => {
+  let filteredEvents = data?.filter(event => {
     if (selectedFilter === 'all') return true;
     if (selectedFilter === 'past') return event.status === 'past';
     if (selectedFilter === 'upcoming') return event.status === 'upcoming';
     return event.category === selectedFilter;
   });
+
+  // Sort events from latest to oldest
+  if (filteredEvents) {
+    filteredEvents = [...filteredEvents].sort((a, b) => {
+      const dateA = Date.parse(a.date);
+      const dateB = Date.parse(b.date);
+      
+      const isAValid = !isNaN(dateA);
+      const isBValid = !isNaN(dateB);
+      
+      if (!isAValid && !isBValid) return 0;
+      if (!isAValid) return 1;
+      if (!isBValid) return -1;
+      
+      return dateB - dateA;
+    });
+  }
 
   const getImageUrl = (url) => {
     if (!url) return "";
@@ -119,7 +136,7 @@ export const Gallery = (props) => {
 
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
     gap: "32px",
     maxWidth: "1400px",
     margin: "0 auto",
