@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Navigation } from "./navigation";
+import { useSearchParams, useLocation } from "react-router-dom";
+import { Navigation as MainNavigation } from "./navigation";
+import { Navigation as StudentNavigation } from "../login/navigation";
 import TwentyInTwo from "./games/TwentyInTwo";
 import ChromeDino from "./games/ChromeDino";
 import MarketMaker from "./games/MarketMaker";
@@ -9,6 +10,8 @@ import "./games/Games.css";
 export const GamesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeGame = searchParams.get("game");
+  const location = useLocation();
+  const isStudentCorner = location.pathname.startsWith("/cseatemp/student");
 
   const [mathHighScore, setMathHighScore] = useState(0);
   const [dinoHighScore, setDinoHighScore] = useState(0);
@@ -32,7 +35,7 @@ export const GamesPage = () => {
 
   return (
     <div className="games-page">
-      <Navigation />
+      {isStudentCorner ? <StudentNavigation /> : <MainNavigation />}
       
       <div className="games-container">
         {activeGame ? (

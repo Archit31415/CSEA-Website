@@ -11,8 +11,14 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:3001", 
-  credentials: true // Must be true to send cookies
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (/^http:\/\/localhost(:\d+)?$/.test(origin)) {
+      return callback(null, true);
+    }
+    callback(null, false);
+  },
+  credentials: true
 }));
 app.use(express.json());
 
@@ -106,6 +112,99 @@ app.get("/redirect", async (req, res) => {
     console.error("Error during authentication:", error);
     res.status(500).send("Authentication failed.");
   }
+});
+
+const nodemailer = require("nodemailer");
+
+const getTransporter = () => {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.iitg.ac.in",
+    port: parseInt(process.env.SMTP_PORT || "587", 10),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false
+    }
+  });
+};
+
+app.post("/auth/send-otp", async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, error: "Email is required." });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail.endsWith("@iitg.ac.in")) {
+    return res.status(400).json({ success: false, error: "Only IIT Guwahati email addresses (@iitg.ac.in) are allowed." });
+  }
+
+  // Generate 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // Store in session
+  req.session.otp = otp;
+  req.session.otpEmail = cleanEmail;
+  req.session.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes validity
+
+  try {
+    const transporter = getTransporter();
+    const mailOptions = {
+      from: `"CSEA IITG Portal" <${process.env.SMTP_USER}>`,
+      to: cleanEmail,
+      subject: "CSEA Portal Verification OTP",
+      text: `Your One-Time Password (OTP) for logging into CSEA Student Corner is: ${otp}. It is valid for 5 minutes.`,
+      html: `<p>Your One-Time Password (OTP) for logging into CSEA Student Corner is: <strong>${otp}</strong>.</p><p>It is valid for 5 minutes.</p>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`OTP ${otp} sent to ${cleanEmail}`);
+    res.json({ success: true, message: "OTP sent successfully." });
+  } catch (error) {
+    console.error("Error sending OTP email:", error);
+    res.status(500).json({ success: false, error: "Failed to send email. Please check SMTP configuration." });
+  }
+});
+
+app.post("/auth/verify-otp", (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, error: "Email and OTP are required." });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanOtp = otp.trim();
+
+  if (
+    req.session.otp &&
+    req.session.otpEmail === cleanEmail &&
+    req.session.otp === cleanOtp &&
+    Date.now() < req.session.otpExpiry
+  ) {
+    req.session.user = cleanEmail;
+    
+    delete req.session.otp;
+    delete req.session.otpEmail;
+    delete req.session.otpExpiry;
+
+    return res.json({ success: true, message: "Verification successful." });
+  } else {
+    return res.status(400).json({ success: false, error: "Invalid or expired OTP." });
+  }
+});
+
+app.post("/auth/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Logout session destroy error:", err);
+      return res.status(500).json({ success: false, error: "Logout failed." });
+    }
+    res.clearCookie("connect.sid");
+    res.json({ success: true, message: "Logged out successfully." });
+  });
 });
 
 app.get("/auth/status", (req, res) => {
