@@ -10,7 +10,8 @@ const UserSchema = new mongoose.Schema({
   },
   name: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
   scores: {
     math: { type: Number, default: 0 },

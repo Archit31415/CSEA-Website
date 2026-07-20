@@ -28,8 +28,15 @@ export const UpcomingEvent = () => {
         const response = await fetch("http://localhost:3000/events");
         const data = await response.json();
         
-        // Filter to find upcoming events
-        const upcomingEvents = data.filter(e => e.status === "upcoming");
+        // Filter to find upcoming events whose date has not passed
+        const upcomingEvents = data.filter(e => {
+          if (e.status !== "upcoming") return false;
+          const parsed = Date.parse(e.date);
+          if (isNaN(parsed)) return false;
+          const eventDate = new Date(parsed);
+          const endOfEventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate(), 23, 59, 59, 999);
+          return endOfEventDay >= new Date();
+        });
         
         if (upcomingEvents.length > 0) {
           // Sort chronologically ascending (closest upcoming event first)

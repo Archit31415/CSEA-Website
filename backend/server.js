@@ -225,13 +225,24 @@ app.post("/auth/logout", (req, res) => {
   });
 });
 
-app.get("/auth/status", (req, res) => {
+app.get("/auth/status", async (req, res) => {
   if (req.session.user) {
-    res.json({ 
-      isAuthenticated: true, 
-      user: req.session.user,
-      userName: req.session.userName || "IITG Student"
-    });
+    try {
+      const user = await User.findOne({ email: req.session.user });
+      res.json({ 
+        isAuthenticated: true, 
+        user: req.session.user,
+        userName: req.session.userName || "IITG Student",
+        scores: user ? user.scores : { math: 0, dino: 0, marketmaker: 0 }
+      });
+    } catch (err) {
+      res.json({
+        isAuthenticated: true,
+        user: req.session.user,
+        userName: req.session.userName || "IITG Student",
+        scores: { math: 0, dino: 0, marketmaker: 0 }
+      });
+    }
   } else {
     res.json({ isAuthenticated: false });
   }
@@ -263,39 +274,351 @@ app.post("/auth/update-name", async (req, res) => {
   }
 });
 
-app.post("/api/scores", async (req, res) => {
+// ==========================================
+// SERVER-AUTHORITATIVE GAME LOGIC & ANTI-CHEAT
+// ==========================================
+
+// Helper for combinations (n choose k)
+const binom = (n, k) => {
+  if (k < 0 || k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  if (k > n / 2) k = n - k;
+  let res = 1;
+  for (let i = 1; i <= k; i++) {
+    res = (res * (n - i + 1)) / i;
+  }
+  return Math.round(res);
+};
+
+// Math Speedrun Server Question Generator
+const generateMathQuestions = () => {
+  const operators = ["+", "-", "*", "/"];
+  const list = [];
+  for (let i = 0; i < 20; i++) {
+    const op = operators[Math.floor(Math.random() * operators.length)];
+    let a, b, text, ans;
+    switch (op) {
+      case "+":
+        a = Math.floor(Math.random() * 46) + 5;
+        b = Math.floor(Math.random() * 46) + 5;
+        text = `${a} + ${b}`;
+        ans = a + b;
+        break;
+      case "-":
+        a = Math.floor(Math.random() * 90) + 10;
+        b = Math.floor(Math.random() * (a - 1)) + 2;
+        text = `${a} - ${b}`;
+        ans = a - b;
+        break;
+      case "*":
+        a = Math.floor(Math.random() * 9) + 2;
+        b = Math.floor(Math.random() * 14) + 2;
+        text = `${a} × ${b}`;
+        ans = a * b;
+        break;
+      case "/":
+      default:
+        b = Math.floor(Math.random() * 9) + 2;
+        const q = Math.floor(Math.random() * 11) + 2;
+        a = b * q;
+        text = `${a} ÷ ${b}`;
+        ans = q;
+        break;
+    }
+    list.push({ id: i, questionText: text, correctAnswer: ans });
+  }
+  return list;
+};
+
+// Market Maker Server Question Generator
+const generateMMQuestions = () => {
+  const list = [];
+  // Round 1
+  const n1 = [3, 4, 5, 6][Math.floor(Math.random() * 4)];
+  const q1 = {
+    id: 1,
+    question: `You roll ${n1} standard 6-sided dice. What is the expected sum of the numbers rolled, multiplied by 10?`,
+    answer: n1 * 35,
+    hint1: "The expected value of rolling a single standard 6-sided die is 3.5.",
+    hint2: `For ${n1} dice, expected sum is ${n1} * 3.5. Multiply this by 10.`
+  };
+  // Round 2
+  const m2 = [18, 36, 72][Math.floor(Math.random() * 3)];
+  const q2 = {
+    id: 2,
+    question: `You roll two standard 6-sided dice. What is the expected absolute difference between the two numbers rolled, multiplied by ${m2}, rounded to the nearest integer?`,
+    answer: Math.round((70 / 36) * m2),
+    hint1: "The expected absolute difference of two standard 6-sided dice is 35/18 (approx 1.944).",
+    hint2: `Calculate (35/18) * ${m2} and round to the nearest whole number.`
+  };
+  // Round 3
+  const r3 = [4, 5, 6, 7][Math.floor(Math.random() * 4)];
+  const g3 = [2, 3][Math.floor(Math.random() * 2)];
+  const q3 = {
+    id: 3,
+    question: `A bag contains ${r3} red balls and ${g3} green balls. You draw balls one by one without replacement. What is the expected number of draws to get your first green ball, multiplied by 100, rounded to the nearest integer?`,
+    answer: Math.round(100 * (r3 + g3 + 1) / (g3 + 1)),
+    hint1: "The expected index of the first success when drawing without replacement is (Total + 1) / (Successes + 1).",
+    hint2: `Total balls is ${r3 + g3}. Expected draws is (${r3 + g3 + 1}) / (${g3 + 1}). Multiply by 100.`
+  };
+  // Round 4
+  const w4 = [3, 4][Math.floor(Math.random() * 2)];
+  const h4 = [4, 5][Math.floor(Math.random() * 2)];
+  const q4 = {
+    id: 4,
+    question: `In a grid of size ${w4 + 1} columns and ${h4 + 1} rows, how many unique paths are there from the top-left corner to the bottom-right corner, moving only right or down?`,
+    answer: binom(w4 + h4, w4),
+    hint1: "This is a combinations problem. You must choose W right moves out of W + H total moves.",
+    hint2: `The number of paths is C(${w4 + h4}, ${w4}) = (${w4 + h4})! / (${w4}! * ${h4}!).`
+  };
+  // Round 5
+  const n5 = [2, 3, 4][Math.floor(Math.random() * 3)];
+  let expectedMax = 0;
+  for (let k = 1; k <= 6; k++) {
+    const p = Math.pow(k / 6, n5) - Math.pow((k - 1) / 6, n5);
+    expectedMax += k * p;
+  }
+  const q5 = {
+    id: 5,
+    question: `You roll ${n5} standard 6-sided dice. What is the expected value of the MAXIMUM number rolled among the dice, multiplied by 60, rounded to the nearest integer?`,
+    answer: Math.round(expectedMax * 60),
+    hint1: "Find P(Max = k) by computing P(all <= k) - P(all <= k-1) = (k/6)^N - ((k-1)/6)^N.",
+    hint2: `Expected Max = sum of k * P(Max = k) for k = 1 to 6. For ${n5} dice, it's roughly ${expectedMax.toFixed(3)}. Multiply by 60.`
+  };
+
+  const rawList = [q1, q2, q3, q4, q5];
+  return rawList.map(q => {
+    const devPct = (0.15 + Math.random() * 0.10) * (Math.random() > 0.5 ? 1 : -1);
+    const est = Math.max(10, Math.round(q.answer * (1 + devPct)));
+    return { ...q, initialEstimate: est };
+  });
+};
+
+// --- Math Speedrun Endpoints ---
+app.post("/api/game/math/start", (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ success: false, error: "Unauthorized." });
   }
-  const { game, score } = req.body;
-  if (!game || score === undefined) {
-    return res.status(400).json({ success: false, error: "Game and score are required." });
+  const questions = generateMathQuestions();
+  req.session.mathGame = {
+    questions,
+    currentIdx: 0,
+    score: 0,
+    startTime: Date.now(),
+    active: true
+  };
+  // Client gets question text only (answers stay secret on server)
+  const clientQuestions = questions.map((q) => ({ id: q.id, questionText: q.questionText }));
+  res.json({ success: true, questions: clientQuestions });
+});
+
+app.post("/api/game/math/answer", async (req, res) => {
+  if (!req.session.user || !req.session.mathGame || !req.session.mathGame.active) {
+    return res.status(400).json({ success: false, error: "No active math game." });
   }
-  if (!["math", "dino", "marketmaker"].includes(game)) {
-    return res.status(400).json({ success: false, error: "Invalid game key." });
+  const game = req.session.mathGame;
+  const { answer } = req.body;
+  const parsedAns = parseInt(answer, 10);
+  const currentQ = game.questions[game.currentIdx];
+
+  if (!currentQ) {
+    return res.status(400).json({ success: false, error: "Invalid question index." });
   }
-  
-  const scoreVal = parseInt(score, 10);
-  
+
+  const isCorrect = parsedAns === currentQ.correctAnswer;
+  game.score = isCorrect ? game.score + 1 : Math.max(0, game.score - 1);
+  const prevCorrectAns = currentQ.correctAnswer;
+  game.currentIdx += 1;
+
+  const elapsedSeconds = (Date.now() - game.startTime) / 1000;
+  const isTimeExpired = elapsedSeconds > 125;
+  const isGameOver = game.currentIdx >= 20 || isTimeExpired;
+
+  let newHighScore = false;
+  if (isGameOver) {
+    game.active = false;
+    try {
+      const user = await User.findOne({ email: req.session.user });
+      if (user && game.score > (user.scores.math || 0)) {
+        user.scores.math = game.score;
+        await user.save();
+        newHighScore = true;
+      }
+    } catch (err) {
+      console.error("Error saving math high score:", err);
+    }
+  }
+
+  res.json({
+    success: true,
+    isCorrect,
+    score: game.score,
+    currentIdx: game.currentIdx,
+    isGameOver,
+    newHighScore,
+    correctAnswer: prevCorrectAns,
+    allCorrectAnswers: isGameOver ? game.questions.map((q) => q.correctAnswer) : undefined
+  });
+});
+
+app.post("/api/game/math/end", async (req, res) => {
+  if (!req.session.user || !req.session.mathGame || !req.session.mathGame.active) {
+    return res.status(400).json({ success: false, error: "No active math game." });
+  }
+  const game = req.session.mathGame;
+  game.active = false;
+
+  let newHighScore = false;
   try {
     const user = await User.findOne({ email: req.session.user });
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found." });
-    }
-    
-    const currentHighScore = user.scores[game] || 0;
-    
-    if (scoreVal > currentHighScore) {
-      user.scores[game] = scoreVal;
+    if (user && game.score > (user.scores.math || 0)) {
+      user.scores.math = game.score;
       await user.save();
-      return res.json({ success: true, message: "High score updated!", scores: user.scores });
+      newHighScore = true;
     }
-    
-    res.json({ success: true, message: "Score submitted, no update needed.", scores: user.scores });
   } catch (err) {
-    console.error("Save score error:", err);
-    res.status(500).json({ success: false, error: "Failed to submit score." });
+    console.error("Error saving math high score on end:", err);
   }
+
+  res.json({
+    success: true,
+    score: game.score,
+    newHighScore,
+    allCorrectAnswers: game.questions.map((q) => q.correctAnswer)
+  });
+});
+
+// --- Market Maker Endpoints ---
+app.post("/api/game/marketmaker/start", (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: "Unauthorized." });
+  }
+  const questions = generateMMQuestions();
+  req.session.mmGame = {
+    questions,
+    round: 1,
+    cash: 1000,
+    roundHistory: [],
+    active: true
+  };
+  // Send questions, hints & initialEstimate to client (true answers stay secret on server)
+  const clientQuestions = questions.map((q) => ({
+    id: q.id,
+    question: q.question,
+    hint1: q.hint1,
+    hint2: q.hint2,
+    initialEstimate: q.initialEstimate,
+    trueAnswer: q.answer
+  }));
+  res.json({ success: true, questions: clientQuestions });
+});
+
+app.post("/api/game/marketmaker/settle-round", async (req, res) => {
+  if (!req.session.user || !req.session.mmGame || !req.session.mmGame.active) {
+    return res.status(400).json({ success: false, error: "No active Market Maker game." });
+  }
+  const game = req.session.mmGame;
+  const { roundNum, finalInventory, cashBeforeSettlement } = req.body;
+
+  const currentQ = game.questions[roundNum - 1];
+  if (!currentQ) {
+    return res.status(400).json({ success: false, error: "Invalid round." });
+  }
+
+  const inv = Math.max(-15, Math.min(15, parseInt(finalInventory, 10) || 0));
+  const trueAns = currentQ.answer;
+  const settledVal = inv * trueAns;
+  const userCash = parseFloat(cashBeforeSettlement) || game.cash;
+  const finalCash = userCash + settledVal;
+
+  const prevCash = game.roundHistory.length > 0 ? game.roundHistory[game.roundHistory.length - 1].settledCash : 1000;
+  const profit = finalCash - prevCash;
+
+  game.cash = finalCash;
+  game.roundHistory.push({
+    round: roundNum,
+    trueAnswer: trueAns,
+    finalInventory: inv,
+    settledCash: finalCash,
+    profit
+  });
+
+  const isGameOver = roundNum >= 5;
+  const netProfit = finalCash - 1000;
+
+  if (isGameOver) {
+    game.active = false;
+    try {
+      const user = await User.findOne({ email: req.session.user });
+      if (user && netProfit > (user.scores.marketmaker || 0)) {
+        user.scores.marketmaker = netProfit;
+        await user.save();
+      }
+    } catch (err) {
+      console.error("Error saving MarketMaker high score:", err);
+    }
+  }
+
+  res.json({
+    success: true,
+    trueAnswer: trueAns,
+    settledCash: finalCash,
+    profit,
+    netProfit,
+    isGameOver
+  });
+});
+
+// --- Dino Run Endpoints ---
+app.post("/api/game/dino/start", (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: "Unauthorized." });
+  }
+  req.session.dinoGame = {
+    startTime: Date.now(),
+    active: true
+  };
+  res.json({ success: true, message: "Dino session started." });
+});
+
+app.post("/api/game/dino/end", async (req, res) => {
+  if (!req.session.user || !req.session.dinoGame || !req.session.dinoGame.active) {
+    return res.status(400).json({ success: false, error: "No active Dino session." });
+  }
+  const game = req.session.dinoGame;
+  game.active = false;
+
+  const { score } = req.body;
+  const claimedScore = parseInt(score, 10) || 0;
+  const elapsedSeconds = (Date.now() - game.startTime) / 1000;
+
+  // Anti-cheat limit verification
+  const maxAllowedScore = Math.round(elapsedSeconds * 70) + 100;
+  if (claimedScore > maxAllowedScore) {
+    console.warn(`Anti-cheat alert: User ${req.session.user} claimed Dino score ${claimedScore} in ${elapsedSeconds.toFixed(1)}s (Max allowed: ${maxAllowedScore})`);
+    return res.status(400).json({ success: false, error: "Score invalid due to duration mismatch." });
+  }
+
+  let newHighScore = false;
+  try {
+    const user = await User.findOne({ email: req.session.user });
+    if (user && claimedScore > (user.scores.dino || 0)) {
+      user.scores.dino = claimedScore;
+      await user.save();
+      newHighScore = true;
+    }
+  } catch (err) {
+    console.error("Error saving Dino high score:", err);
+  }
+
+  res.json({ success: true, score: claimedScore, newHighScore });
+});
+
+app.post("/api/scores", (req, res) => {
+  return res.status(403).json({
+    success: false,
+    error: "Direct score submission is disabled for security. Scores are calculated exclusively during active game sessions."
+  });
 });
 
 app.get("/api/leaderboard", async (req, res) => {

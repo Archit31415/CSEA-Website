@@ -105,23 +105,87 @@ export const TwentyInTwo = () => {
 
   // Start the game
   const startGame = () => {
-    const list = [];
-    for (let i = 0; i < 20; i++) {
-      list.push(generateQuestion(difficulty));
-    }
-    setQuestions(list);
-    setCurrentIdx(0);
-    setUserInput("");
-    setScore(0);
-    setSecondsLeft(120);
-    setGameState(GAME_STATE.PLAYING);
-    setFlashState(null);
+    const startLocalMathGame = () => {
+      const list = [];
+      for (let i = 0; i < 20; i++) {
+        list.push(generateQuestion(difficulty));
+      }
+      setQuestions(list);
+      setCurrentIdx(0);
+      setUserInput("");
+      setScore(0);
+      setSecondsLeft(120);
+      setGameState(GAME_STATE.PLAYING);
+      setFlashState(null);
+    };
+
+    fetch("http://localhost:3000/api/game/math/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ difficulty }),
+      credentials: "include"
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setQuestions(data.questions);
+        setCurrentIdx(0);
+        setUserInput("");
+        setScore(0);
+        setSecondsLeft(120);
+        setGameState(GAME_STATE.PLAYING);
+        setFlashState(null);
+      } else {
+        startLocalMathGame();
+      }
+    })
+    .catch(err => {
+      console.error("Math start error:", err);
+      startLocalMathGame();
+    });
   };
+
+  // Fetch server high score on mount
+  useEffect(() => {
+    fetch("http://localhost:3000/auth/status", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        if (data.isAuthenticated && data.scores && typeof data.scores.math === "number") {
+          const currentLocal = parseInt(localStorage.getItem("twenty_in_two_high_score") || "0", 10);
+          const best = Math.max(currentLocal, data.scores.math);
+          setHighScore(best);
+          localStorage.setItem("twenty_in_two_high_score", best.toString());
+        }
+      })
+      .catch(err => console.error("Error fetching math server high score:", err));
+  }, []);
 
   // End the game
   const endGame = () => {
     setGameState(GAME_STATE.GAMEOVER);
     if (timerRef.current) clearInterval(timerRef.current);
+
+    fetch("http://localhost:3000/api/game/math/end", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include"
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        if (data.newHighScore || data.score > highScore) {
+          setHighScore(data.score);
+          localStorage.setItem("twenty_in_two_high_score", data.score.toString());
+        }
+        if (data.allCorrectAnswers) {
+          setQuestions(prev => prev.map((q, idx) => ({
+            ...q,
+            correctAnswer: data.allCorrectAnswers[idx] ?? q.correctAnswer
+          })));
+        }
+      }
+    })
+    .catch(err => console.error("Math end session error:", err));
   };
 
   // Timer tick
@@ -150,71 +214,110 @@ export const TwentyInTwo = () => {
     }
   }, [gameState, currentIdx]);
 
-  // Handle high score updates
-  useEffect(() => {
-    if (gameState === GAME_STATE.GAMEOVER) {
-      if (score > highScore) {
-        setHighScore(score);
-        localStorage.setItem("twenty_in_two_high_score", score.toString());
-      }
-
-      // Sync score to database in background
-      fetch("http://localhost:3000/api/scores", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ game: "math", score: score }),
-        credentials: "include"
-      })
-      .then(res => res.json())
-      .then(data => console.log("Math score synced:", data))
-      .catch(err => console.error("Math score sync failed:", err));
-    }
-  }, [gameState, score, highScore]);
-
   // Handle user response submission
   const handleSubmit = (e) => {
     e.preventDefault();
     if (userInput.trim() === "" || gameState !== GAME_STATE.PLAYING) return;
 
-    const currentQuestion = questions[currentIdx];
-    const parsedAns = parseInt(userInput.trim(), 10);
-    const isCorrect = parsedAns === currentQuestion.correctAnswer;
+    const currentInput = userInput.trim();
+    setUserInput("");
 
-    // Update questions array with user answers
-    const updatedQuestions = [...questions];
-    updatedQuestions[currentIdx] = {
-      ...currentQuestion,
-      userAns: parsedAns,
-      correct: isCorrect,
-    };
-    setQuestions(updatedQuestions);
+    const doLocalAnswer = () => {
+      const parsed = parseInt(currentInput, 10);
+      const isCorrect = parsed === questions[currentIdx]?.correctAnswer;
+      const nextScore = isCorrect ? score + 1 : Math.max(0, score - 1);
 
-    // Scoring: +1 for correct, -1 for wrong. Minimum score is 0.
-    const newScore = isCorrect ? score + 1 : Math.max(0, score - 1);
-    setScore(newScore);
+      setQuestions((prevQuestions) => {
+        const updated = [...prevQuestions];
+        if (updated[currentIdx]) {
+          updated[currentIdx] = {
+            ...updated[currentIdx],
+            userAns: parsed,
+            correct: isCorrect
+          };
+        }
+        return updated;
+      });
 
-    // Apply quick feedback flash
-    setFlashState(isCorrect ? "correct" : "incorrect");
+      setScore(nextScore);
+      setFlashState(isCorrect ? "correct" : "incorrect");
 
-    setTimeout(() => {
-      setFlashState(null);
-      setUserInput("");
-
-      // Advance or endGame
-      if (currentIdx < 19) {
-        setCurrentIdx((prev) => prev + 1);
-      } else {
-        endGame();
+      if (nextScore > highScore) {
+        setHighScore(nextScore);
+        localStorage.setItem("twenty_in_two_high_score", nextScore.toString());
       }
-    }, 200);
+
+      const isGameOver = currentIdx + 1 >= 20 || secondsLeft <= 0;
+      setTimeout(() => {
+        setFlashState(null);
+        if (isGameOver) {
+          endGame();
+        } else {
+          setCurrentIdx((prev) => prev + 1);
+        }
+      }, 200);
+    };
+
+    fetch("http://localhost:3000/api/game/math/answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answer: currentInput }),
+      credentials: "include"
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setQuestions((prevQuestions) => {
+          const updated = [...prevQuestions];
+          if (updated[currentIdx]) {
+            updated[currentIdx] = {
+              ...updated[currentIdx],
+              userAns: parseInt(currentInput, 10),
+              correct: data.isCorrect,
+              correctAnswer: data.correctAnswer
+            };
+          }
+          if (data.allCorrectAnswers) {
+            return updated.map((q, idx) => ({
+              ...q,
+              correctAnswer: data.allCorrectAnswers[idx] ?? q.correctAnswer
+            }));
+          }
+          return updated;
+        });
+
+        setScore(data.score);
+        setFlashState(data.isCorrect ? "correct" : "incorrect");
+        if (data.newHighScore) {
+          setHighScore(data.score);
+          localStorage.setItem("twenty_in_two_high_score", data.score.toString());
+        }
+
+        setTimeout(() => {
+          setFlashState(null);
+          if (data.isGameOver) {
+            endGame();
+          } else {
+            setCurrentIdx(data.currentIdx);
+          }
+        }, 200);
+      } else {
+        doLocalAnswer();
+      }
+    })
+    .catch(err => {
+      console.error("Answer submission error:", err);
+      doLocalAnswer();
+    });
   };
 
   // Copy results summary to clipboard
   const handleShare = () => {
-    const correctCount = questions.filter((q) => q.correct).length;
-    const accuracy = Math.round((correctCount / questions.length) * 100);
+    const correctCount = questions.filter((q) => q.correct === true).length;
+    const attemptedCount = questions.filter((q) => q.correct !== null).length;
+    const accuracyPct = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 0;
     const timeTaken = 120 - secondsLeft;
-    const text = `🧩 CSEA Arithmetic Challenge: 20 in 2 🧩\nDifficulty: ${difficulty}\nScore: ${score} pts\nAccuracy: ${correctCount}/20 (${accuracy}%)\nTime: ${timeTaken} seconds\nCan you beat my score? Play at CSEA website!`;
+    const text = `🧩 CSEA Arithmetic Challenge: 20 in 2 🧩\nDifficulty: ${difficulty}\nScore: ${score} pts\nAccuracy: ${accuracyPct}% (${correctCount}/${attemptedCount} attempted)\nTime: ${timeTaken} seconds\nCan you beat my score? Play at CSEA website!`;
     navigator.clipboard.writeText(text).then(() => {
       alert("Results copied to clipboard! Share it with your friends.");
     }).catch(() => {
@@ -329,9 +432,14 @@ export const TwentyInTwo = () => {
             </div>
             <div className="results-stat-card">
               <div className="results-stat-val">
-                {questions.filter((q) => q.correct).length}/20
+                {(() => {
+                  const correctCount = questions.filter((q) => q.correct === true).length;
+                  const attemptedCount = questions.filter((q) => q.correct !== null).length;
+                  const accuracyPct = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 0;
+                  return `${accuracyPct}% (${correctCount}/${attemptedCount})`;
+                })()}
               </div>
-              <div className="results-stat-label">Accuracy</div>
+              <div className="results-stat-label">Accuracy (Attempted)</div>
             </div>
             <div className="results-stat-card">
               <div className="results-stat-val">
