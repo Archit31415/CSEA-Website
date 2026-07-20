@@ -54,6 +54,11 @@ export const Navigation = (props) => {
               </Link>
             </li>
             <li>
+              <Link to="/cseatemp/student/leaderboard" className="page-scroll">
+                Leaderboard
+              </Link>
+            </li>
+            <li>
               <Link to="/cseatemp/student/games" className="page-scroll">
                 Games
               </Link>

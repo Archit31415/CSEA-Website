@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const { ConfidentialClientApplication } = require("@azure/msal-node");
+const User = require("./models/User");
 
 dotenv.config();
 
@@ -169,7 +170,7 @@ app.post("/auth/send-otp", async (req, res) => {
   }
 });
 
-app.post("/auth/verify-otp", (req, res) => {
+app.post("/auth/verify-otp", async (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp) {
     return res.status(400).json({ success: false, error: "Email and OTP are required." });
@@ -184,13 +185,30 @@ app.post("/auth/verify-otp", (req, res) => {
     req.session.otp === cleanOtp &&
     Date.now() < req.session.otpExpiry
   ) {
-    req.session.user = cleanEmail;
-    
-    delete req.session.otp;
-    delete req.session.otpEmail;
-    delete req.session.otpExpiry;
+    try {
+      let user = await User.findOne({ email: cleanEmail });
+      if (!user) {
+        const defaultName = cleanEmail.split("@")[0].split(".")
+          .map(part => part.charAt(0).toUpperCase() + part.slice(1).replace(/\d+/g, ""))
+          .join(" ")
+          .trim() || "IITG Student";
 
-    return res.json({ success: true, message: "Verification successful." });
+        user = new User({ email: cleanEmail, name: defaultName });
+        await user.save();
+      }
+
+      req.session.user = cleanEmail;
+      req.session.userName = user.name;
+      
+      delete req.session.otp;
+      delete req.session.otpEmail;
+      delete req.session.otpExpiry;
+
+      return res.json({ success: true, message: "Verification successful.", user: cleanEmail, userName: user.name });
+    } catch (err) {
+      console.error("Database user find/create error:", err);
+      return res.status(500).json({ success: false, error: "Failed to establish user profile." });
+    }
   } else {
     return res.status(400).json({ success: false, error: "Invalid or expired OTP." });
   }
@@ -209,9 +227,126 @@ app.post("/auth/logout", (req, res) => {
 
 app.get("/auth/status", (req, res) => {
   if (req.session.user) {
-    res.json({ isAuthenticated: true, user: req.session.user });
+    res.json({ 
+      isAuthenticated: true, 
+      user: req.session.user,
+      userName: req.session.userName || "IITG Student"
+    });
   } else {
     res.json({ isAuthenticated: false });
+  }
+});
+
+app.post("/auth/update-name", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: "Unauthorized." });
+  }
+  const { name } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ success: false, error: "Name is required." });
+  }
+  
+  try {
+    const user = await User.findOneAndUpdate(
+      { email: req.session.user },
+      { name: name.trim() },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found." });
+    }
+    req.session.userName = user.name;
+    res.json({ success: true, message: "Name updated successfully.", userName: user.name });
+  } catch (err) {
+    console.error("Update name error:", err);
+    res.status(500).json({ success: false, error: "Failed to update name." });
+  }
+});
+
+app.post("/api/scores", async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, error: "Unauthorized." });
+  }
+  const { game, score } = req.body;
+  if (!game || score === undefined) {
+    return res.status(400).json({ success: false, error: "Game and score are required." });
+  }
+  if (!["math", "dino", "marketmaker"].includes(game)) {
+    return res.status(400).json({ success: false, error: "Invalid game key." });
+  }
+  
+  const scoreVal = parseInt(score, 10);
+  
+  try {
+    const user = await User.findOne({ email: req.session.user });
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found." });
+    }
+    
+    const currentHighScore = user.scores[game] || 0;
+    
+    if (scoreVal > currentHighScore) {
+      user.scores[game] = scoreVal;
+      await user.save();
+      return res.json({ success: true, message: "High score updated!", scores: user.scores });
+    }
+    
+    res.json({ success: true, message: "Score submitted, no update needed.", scores: user.scores });
+  } catch (err) {
+    console.error("Save score error:", err);
+    res.status(500).json({ success: false, error: "Failed to submit score." });
+  }
+});
+
+app.get("/api/leaderboard", async (req, res) => {
+  try {
+    const topMath = await User.find({ "scores.math": { $gt: 0 } })
+      .sort({ "scores.math": -1 })
+      .limit(10)
+      .select("name email scores.math");
+
+    const topDino = await User.find({ "scores.dino": { $gt: 0 } })
+      .sort({ "scores.dino": -1 })
+      .limit(10)
+      .select("name email scores.dino");
+
+    const topMM = await User.find({ "scores.marketmaker": { $gt: 0 } })
+      .sort({ "scores.marketmaker": -1 })
+      .limit(10)
+      .select("name email scores.marketmaker");
+
+    const allUsers = await User.find({
+      $or: [
+        { "scores.math": { $gt: 0 } },
+        { "scores.dino": { $gt: 0 } },
+        { "scores.marketmaker": { $gt: 0 } }
+      ]
+    }).select("name email scores");
+
+    const combined = allUsers.map(u => {
+      const mathScore = u.scores.math || 0;
+      const dinoScore = u.scores.dino || 0;
+      const mmScore = u.scores.marketmaker || 0;
+      const totalScore = (mathScore * 250) + dinoScore + Math.max(0, Math.round(mmScore / 2));
+      return {
+        name: u.name,
+        email: u.email,
+        scores: u.scores,
+        totalScore
+      };
+    })
+    .sort((a, b) => b.totalScore - a.totalScore)
+    .slice(0, 15);
+
+    res.json({
+      math: topMath,
+      dino: topDino,
+      marketmaker: topMM,
+      combined: combined
+    });
+  } catch (err) {
+    console.error("Leaderboard query error:", err);
+    res.status(500).json({ success: false, error: "Failed to fetch leaderboard data." });
   }
 });
 // Event,Team & Intern Experience Routes

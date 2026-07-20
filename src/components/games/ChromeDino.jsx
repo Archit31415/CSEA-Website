@@ -554,6 +554,17 @@ export const ChromeDino = () => {
               localStorage.setItem("chrome_dino_high_score", state.score.toString());
               setHighScore(state.score);
             }
+
+            // Sync score to database in background
+            fetch("http://localhost:3000/api/scores", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ game: "dino", score: state.score }),
+              credentials: "include"
+            })
+            .then(res => res.json())
+            .then(data => console.log("Dino score synced:", data))
+            .catch(err => console.error("Dino score sync failed:", err));
           }
         });
       }

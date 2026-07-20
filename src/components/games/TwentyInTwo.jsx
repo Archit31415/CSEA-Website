@@ -157,6 +157,17 @@ export const TwentyInTwo = () => {
         setHighScore(score);
         localStorage.setItem("twenty_in_two_high_score", score.toString());
       }
+
+      // Sync score to database in background
+      fetch("http://localhost:3000/api/scores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ game: "math", score: score }),
+        credentials: "include"
+      })
+      .then(res => res.json())
+      .then(data => console.log("Math score synced:", data))
+      .catch(err => console.error("Math score sync failed:", err));
     }
   }, [gameState, score, highScore]);
 

@@ -423,6 +423,17 @@ export const MarketMaker = () => {
         setHighScore(netProfit);
         localStorage.setItem("csea_market_maker_high_score", netProfit.toString());
       }
+
+      // Sync score to database in background
+      fetch("http://localhost:3000/api/scores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ game: "marketmaker", score: netProfit }),
+        credentials: "include"
+      })
+      .then(res => res.json())
+      .then(data => console.log("Market Maker score synced:", data))
+      .catch(err => console.error("Market Maker score sync failed:", err));
     }
   };
 

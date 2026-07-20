@@ -167,3 +167,7 @@ tr:hover {
   color: #4facfe;
   text-decoration: underline;
 }
+
+.leaderboard-row-hover:hover {
+  background: rgba(0, 242, 254, 0.04) !important;
+}
