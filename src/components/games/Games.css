@@ -44,14 +44,17 @@
 
 /* Selection Grid */
 .games-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 30px;
   margin-top: 20px;
   animation: fadeInUp 0.8s ease-out;
 }
 
 .game-card {
+  flex: 1 1 320px;
+  max-width: 380px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;

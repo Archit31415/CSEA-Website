@@ -786,10 +786,52 @@ export const ChromeDino = () => {
           </div>
         </div>
 
-        <div className="dino-powerup-legend" style={{ marginTop: "15px", display: "flex", gap: "18px", justifyContent: "center", flexWrap: "wrap", fontSize: "13px", color: "#a49fc6" }}>
-          <div className="powerup-item">🛡️ <b>Shield:</b> Protects against 1 obstacle hit</div>
-          <div className="powerup-item">🚀 <b>Double Jump:</b> Enables mid-air extra jump</div>
-          <div className="powerup-item">💎 <b>Star Gem:</b> +50 bonus points</div>
+        <div className="dino-powerup-legend" style={{ marginTop: "20px", display: "flex", gap: "25px", justifyContent: "center", flexWrap: "wrap" }}>
+          <div className="powerup-item" style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#a49fc6" }}>
+            <span className="powerup-visual shield-visual" style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "24px",
+              height: "24px",
+              borderRadius: "50%",
+              background: "#00f2fe",
+              boxShadow: "0 0 8px #00f2fe",
+              fontSize: "12px",
+              color: "#fff"
+            }}>🛡️</span>
+            <span><b>Shield:</b> Protects against 1 obstacle hit</span>
+          </div>
+          <div className="powerup-item" style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#a49fc6" }}>
+            <span className="powerup-visual jump-visual" style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "24px",
+              height: "24px",
+              borderRadius: "50%",
+              background: "#b026ff",
+              boxShadow: "0 0 8px #b026ff",
+              fontSize: "12px",
+              color: "#fff"
+            }}>🚀</span>
+            <span><b>Double Jump:</b> Enables mid-air extra jump</span>
+          </div>
+          <div className="powerup-item" style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#a49fc6" }}>
+            <span className="powerup-visual star-visual" style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "24px",
+              height: "24px",
+              borderRadius: "50%",
+              background: "#ffd700",
+              boxShadow: "0 0 8px #ffd700",
+              fontSize: "12px",
+              color: "#fff"
+            }}>💎</span>
+            <span><b>Star Gem:</b> +50 bonus points</span>
+          </div>
         </div>
       </div>
     </div>
