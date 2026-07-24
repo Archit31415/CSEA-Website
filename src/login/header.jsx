@@ -4,9 +4,9 @@ import Particle from "./Particle";
 export const Header = (props) => {
   return (
     <header id="header">
-      <Particle /> {/* Include the Particle component here */}
-      <div className="intro">
-        <div className="overlay">
+      <div className="intro" style={{ position: "relative" }}>
+        <Particle />
+        <div className="overlay" style={{ position: "relative", zIndex: 2 }}>
           <div className="container">
             <div className="row">
               <div className="col-md-8 col-md-offset-2 intro-text">
