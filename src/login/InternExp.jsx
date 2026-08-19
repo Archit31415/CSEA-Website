@@ -99,6 +99,7 @@ export const InternExp = () => {
 
   const breadcrumbStyle = {
     display: "flex",
+    flexWrap: "wrap",
     alignItems: "center",
     gap: "8px",
     maxWidth: "1000px",

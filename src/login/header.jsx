@@ -17,7 +17,7 @@ export const Header = (props) => {
 
                 {props.userName && (
                   <div style={{ marginTop: "15px", marginBottom: "25px" }}>
-                    <h3 style={{ color: "#00f2fe", margin: "0 0 10px 0", fontWeight: "700", fontSize: "24px" }}>
+                    <h3 style={{ color: "#60a5fa", margin: "0 0 10px 0", fontWeight: "700", fontSize: "24px" }}>
                       Welcome, {props.userName}!
                     </h3>
                     <button 
@@ -37,7 +37,7 @@ export const Header = (props) => {
                         fontFamily: "inherit"
                       }}
                     >
-                      ✏️ Edit Name
+                      Edit Name
                     </button>
                   </div>
                 )}

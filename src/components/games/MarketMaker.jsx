@@ -829,18 +829,18 @@ export const MarketMaker = () => {
   };
 
   const getRankDetails = (netProfit) => {
-    if (netProfit < 0) return { title: "Liquidated Intern 📉", color: "#ff1744", desc: "Ouch. The order book was too quick, or estimation was off-market. Don't worry, even Ken Griffin had tough days. Try again!" };
-    if (netProfit < 500) return { title: "Junior Trader 💼", color: "#ffb199", desc: "Solid risk control! You ended green, but there's room to quote tighter spreads and capture more volume." };
-    if (netProfit < 1500) return { title: "Market Maker Associate 📈", color: "#00f2fe", desc: "Impressive! You managed your inventory well and reacted quickly to hint arrivals. You're ready for the desk." };
-    if (netProfit < 3000) return { title: "VP of Quantitative Trading 🚀", color: "#e040fb", desc: "Exceptional! High execution fill rates and outstanding estimation. Optiver recruiters are looking for you." };
-    return { title: "Citadel / Jane Street Partner 👑", color: "#00e676", desc: "Absolute master of liquidity! Flawless inventory shading and perfect estimation bounds. You are the market." };
+    if (netProfit < 0) return { title: "Liquidated Intern", color: "#ff1744", desc: "Ouch. The order book was too quick, or estimation was off-market. Don't worry, even Ken Griffin had tough days. Try again!" };
+    if (netProfit < 500) return { title: "Junior Trader", color: "#ffb199", desc: "Solid risk control! You ended green, but there's room to quote tighter spreads and capture more volume." };
+    if (netProfit < 1500) return { title: "Market Maker Associate", color: "#00f2fe", desc: "Impressive! You managed your inventory well and reacted quickly to hint arrivals. You're ready for the desk." };
+    if (netProfit < 3000) return { title: "VP of Quantitative Trading", color: "#e040fb", desc: "Exceptional! High execution fill rates and outstanding estimation. Optiver recruiters are looking for you." };
+    return { title: "Citadel / Jane Street Partner", color: "#00e676", desc: "Absolute master of liquidity! Flawless inventory shading and perfect estimation bounds. You are the market." };
   };
 
   // Clipboard copy Share stats
   const handleShare = () => {
     const netProfit = cash - STARTING_CASH;
     const rank = getRankDetails(netProfit).title;
-    const text = `📊 CSEA Arcade: Quant Market Maker Challenge 📊\nRank: ${rank}\nFinal P&L: $${netProfit.toLocaleString()}\nHigh Score: $${highScore.toLocaleString()}\nCan you make a better spread? Play at CSEA Arcade!`;
+    const text = `CSEA Arcade: Quant Market Maker Challenge\nRank: ${rank}\nFinal P&L: $${netProfit.toLocaleString()}\nHigh Score: $${highScore.toLocaleString()}\nCan you make a better spread? Play at CSEA Arcade!`;
     navigator.clipboard.writeText(text).then(() => {
       alert("Results copied to clipboard! Share it with your friends.");
     }).catch(() => {
@@ -861,7 +861,7 @@ export const MarketMaker = () => {
 
       {gameState === GAME_STATE.START && (
         <div className="mm-start-screen">
-          <span className="game-icon">📊</span>
+          <span className="game-icon"></span>
           <h3>CSEA Market Maker</h3>
           <p className="mm-start-subtitle">
             A fast-paced quantitative trading game. Trade contracts against bots based on mathematical estimations and lock in profits.
@@ -874,40 +874,40 @@ export const MarketMaker = () => {
                 className={`mm-onboarding-tab-btn ${onboardingTab === "goal" ? "active" : ""}`}
                 onClick={() => setOnboardingTab("goal")}
               >
-                🎯 1. The Goal
+                1. The Goal
               </button>
               <button
                 type="button"
                 className={`mm-onboarding-tab-btn ${onboardingTab === "trading" ? "active" : ""}`}
                 onClick={() => setOnboardingTab("trading")}
               >
-                🔄 2. How to Trade
+                2. How to Trade
               </button>
               <button
                 type="button"
                 className={`mm-onboarding-tab-btn ${onboardingTab === "intel" ? "active" : ""}`}
                 onClick={() => setOnboardingTab("intel")}
               >
-                💡 3. Hints & Bots
+                3. Hints & Bots
               </button>
               <button
                 type="button"
                 className={`mm-onboarding-tab-btn ${onboardingTab === "risk" ? "active" : ""}`}
                 onClick={() => setOnboardingTab("risk")}
               >
-                ⚖️ 4. Risk & Limits
+                4. Risk & Limits
               </button>
             </div>
 
             <div className="mm-onboarding-content">
               {onboardingTab === "goal" && (
                 <div className="mm-onboarding-pane">
-                  <h4>🎯 The Basic Goal</h4>
+                  <h4>The Basic Goal</h4>
                   <p>
                     You are trading contracts of an asset. The <b>True Value</b> of each contract is the exact numerical answer to a math/probability question.
                   </p>
                   <div className="onboarding-example-box">
-                    <h5>💡 Profit Example:</h5>
+                    <h5>Profit Example:</h5>
                     <p>
                       Suppose the question's true answer is <b>120</b>:
                     </p>
@@ -921,20 +921,20 @@ export const MarketMaker = () => {
 
               {onboardingTab === "trading" && (
                 <div className="mm-onboarding-pane">
-                  <h4>🔄 Order Types (How to Trade)</h4>
+                  <h4>Order Types (How to Trade)</h4>
                   <p>
                     You can trade with the market makers (bots) in two different ways:
                   </p>
                   <div className="onboarding-split-grid">
                     <div className="onboarding-column">
-                      <h5>⚡ Market Orders (Instant)</h5>
+                      <h5>Market Orders (Instant)</h5>
                       <p>
                         Click <b>Mkt Buy</b> or <b>Mkt Sell</b> to trade instantly at the bots' current prices.
                       </p>
                       <span className="onboarding-badge info">Fast but expensive (pays the spread)</span>
                     </div>
                     <div className="onboarding-column">
-                      <h5>📈 Limit Orders (Market Making)</h5>
+                      <h5>Limit Orders (Market Making)</h5>
                       <p>
                         Type a price and post a <b>Limit Bid</b> (buy) or <b>Limit Ask</b> (sell). Your quotes will sit in the Order Book.
                       </p>
@@ -946,21 +946,21 @@ export const MarketMaker = () => {
 
               {onboardingTab === "intel" && (
                 <div className="mm-onboarding-pane">
-                  <h4>💡 Hints & Bot Strategy</h4>
+                  <h4>Hints & Bot Strategy</h4>
                   <p>
                     Bots trade based on estimation. At the start of the round, they quote wide prices because they are uncertain.
                   </p>
                   <ul>
                     <li><b>Hints Arrive:</b> At <b>T-60s</b> and <b>T-30s</b>, hints about the true answer are revealed.</li>
                     <li><b>Convergence:</b> With each hint, bots update their prices to get closer and closer to the true answer.</li>
-                    <li><b>⚠️ Adverse Selection (Stale Quote Risk):</b> When a new hint drops, bots will instantly trade against any old Limit Orders you left in the book. <b>Cancel/update your limits quickly (Press [C] or Esc)</b>!</li>
+                    <li><b>Adverse Selection (Stale Quote Risk):</b> When a new hint drops, bots will instantly trade against any old Limit Orders you left in the book. <b>Cancel/update your limits quickly (Press [C] or Esc)</b>!</li>
                   </ul>
                 </div>
               )}
 
               {onboardingTab === "risk" && (
                 <div className="mm-onboarding-pane">
-                  <h4>⚖️ Inventory & Risk Management</h4>
+                  <h4>Inventory & Risk Management</h4>
                   <ul>
                     <li><b>Inventory:</b> Your position in contracts. Buying increases it (`+`), selling decreases it (`-`).</li>
                     <li><b>Risk Limit:</b> You can hold a maximum of <b>±15 contracts</b>. Managing this inventory risk is crucial so you don't get stuck at the limit!</li>
@@ -1127,14 +1127,14 @@ export const MarketMaker = () => {
                   {/* Time-locked hints */}
                   <div className="hints-section">
                     <div className={`hint-item ${timeRemaining <= 60 ? "unlocked" : "locked"}`}>
-                      <span className="hint-indicator">⚡ T-60 Hint:</span>
+                      <span className="hint-indicator">T-60 Hint:</span>
                       <span className="hint-text">
                         {timeRemaining <= 60 ? (questions[round - 1]?.hint1 || "Revealed!") : "Revealing in " + Math.max(0, timeRemaining - 60) + "s..."}
                       </span>
                     </div>
 
                     <div className={`hint-item ${timeRemaining <= 30 ? "unlocked" : "locked"}`}>
-                      <span className="hint-indicator">⚡ T-30 Hint:</span>
+                      <span className="hint-indicator">T-30 Hint:</span>
                       <span className="hint-text">
                         {timeRemaining <= 30 ? (questions[round - 1]?.hint2 || "Revealed!") : "Revealing in " + Math.max(0, timeRemaining - 30) + "s..."}
                       </span>
@@ -1315,7 +1315,7 @@ export const MarketMaker = () => {
         <div className="mm-help-overlay" onClick={() => setShowHelpModal(false)}>
           <div className="mm-help-modal" onClick={(e) => e.stopPropagation()}>
             <div className="mm-help-header">
-              <h4>📊 Market Maker Cheat Sheet</h4>
+              <h4>Market Maker Cheat Sheet</h4>
               <button type="button" className="mm-help-close-btn" onClick={() => setShowHelpModal(false)}>&times;</button>
             </div>
             <div className="mm-help-content">

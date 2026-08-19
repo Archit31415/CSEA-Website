@@ -106,7 +106,7 @@ export const UpcomingEvent = () => {
 
   const imageColStyle = {
     flex: "1",
-    minWidth: "320px",
+    minWidth: "280px",
     position: "relative",
   };
 
@@ -120,7 +120,6 @@ export const UpcomingEvent = () => {
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.2)",
-    height: "450px", // Match maximum height to prevent layout shifting
   };
 
   const imgStyle = {
@@ -133,11 +132,10 @@ export const UpcomingEvent = () => {
 
   const contentColStyle = {
     flex: "1.2",
-    minWidth: "320px",
+    minWidth: "280px",
   };
 
   const titleStyle = {
-    fontSize: "38px",
     fontWeight: "800",
     lineHeight: "1.2",
     marginBottom: "16px",
@@ -214,6 +212,7 @@ export const UpcomingEvent = () => {
           <div style={imageColStyle}>
             <Zoom>
               <div 
+                className="upcoming-event-image-wrapper"
                 style={imageWrapperStyle}
                 onMouseEnter={(e) => {
                   const img = e.currentTarget.querySelector("img");
@@ -239,7 +238,7 @@ export const UpcomingEvent = () => {
           {/* Details Column */}
           <div style={contentColStyle}>
             <div>
-              <h2 style={titleStyle}>{event.event_name}</h2>
+              <h2 className="upcoming-event-title" style={titleStyle}>{event.event_name}</h2>
               
               <div style={metaRowStyle}>
                 <div style={metaItemStyle}>

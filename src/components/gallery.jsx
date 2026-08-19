@@ -89,7 +89,6 @@ export const Gallery = (props) => {
   };
 
   const titleStyle = {
-    fontSize: "48px",
     fontWeight: "700",
     color: "#1e293b",
     marginBottom: "16px",
@@ -136,7 +135,7 @@ export const Gallery = (props) => {
 
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
     gap: "32px",
     maxWidth: "1400px",
     margin: "0 auto",
@@ -269,7 +268,7 @@ export const Gallery = (props) => {
     <div id="portfolio" style={containerStyle}>
       <div className="container">
         <div style={sectionTitleStyle}>
-          <h2 style={titleStyle}>
+          <h2 className="gallery-section-title" style={titleStyle}>
             <Zoom cascade when={inView}>
               Events Gallery
             </Zoom>

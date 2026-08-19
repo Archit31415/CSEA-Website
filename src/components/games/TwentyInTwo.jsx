@@ -317,7 +317,7 @@ export const TwentyInTwo = () => {
     const attemptedCount = questions.filter((q) => q.correct !== null).length;
     const accuracyPct = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 0;
     const timeTaken = 120 - secondsLeft;
-    const text = `🧩 CSEA Arithmetic Challenge: 20 in 2 🧩\nDifficulty: ${difficulty}\nScore: ${score} pts\nAccuracy: ${accuracyPct}% (${correctCount}/${attemptedCount} attempted)\nTime: ${timeTaken} seconds\nCan you beat my score? Play at CSEA website!`;
+    const text = `CSEA Arithmetic Challenge: 20 in 2\nDifficulty: ${difficulty}\nScore: ${score} pts\nAccuracy: ${accuracyPct}% (${correctCount}/${attemptedCount} attempted)\nTime: ${timeTaken} seconds\nCan you beat my score? Play at CSEA website!`;
     navigator.clipboard.writeText(text).then(() => {
       alert("Results copied to clipboard! Share it with your friends.");
     }).catch(() => {
@@ -329,7 +329,7 @@ export const TwentyInTwo = () => {
     <div className="game-play-area">
       {gameState === GAME_STATE.START && (
         <div className="math-setup">
-          <span className="game-icon">⚡</span>
+          <span className="game-icon"></span>
           <h3>20 in 2 Challenge</h3>
           <p>
             Test your numerical instincts! You will face <b>20 arithmetic questions</b>. 
@@ -421,7 +421,7 @@ export const TwentyInTwo = () => {
 
       {gameState === GAME_STATE.GAMEOVER && (
         <div className="math-results">
-          <span className="game-icon" style={{ fontSize: "60px" }}>🏆</span>
+          <span className="game-icon" style={{ fontSize: "60px" }}></span>
           <h3>Speedrun Completed!</h3>
           <p style={{ color: "#a49fc6" }}>Here is your performance breakdown under pressure.</p>
 
@@ -451,13 +451,13 @@ export const TwentyInTwo = () => {
 
           <div className="results-message">
             {score >= 18 ? (
-              <span style={{ color: "#00e676" }}>🚀 Quant Master! Brilliant speed & accuracy.</span>
+              <span style={{ color: "#00e676" }}>Quant Master! Brilliant speed & accuracy.</span>
             ) : score >= 12 ? (
-              <span style={{ color: "#00f2fe" }}>👏 Mental Math Wizard! Excellent run.</span>
+              <span style={{ color: "#00f2fe" }}>Mental Math Wizard! Excellent run.</span>
             ) : score >= 6 ? (
-              <span style={{ color: "#ffb199" }}>👍 Good Job! Keep practicing to get faster.</span>
+              <span style={{ color: "#ffb199" }}>Good Job! Keep practicing to get faster.</span>
             ) : (
-              <span style={{ color: "#ff1744" }}>💪 Don't give up! Practice makes perfect.</span>
+              <span style={{ color: "#ff1744" }}>Don't give up! Practice makes perfect.</span>
             )}
           </div>
 

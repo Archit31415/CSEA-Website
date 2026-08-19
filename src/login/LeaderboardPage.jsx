@@ -26,10 +26,10 @@ const LeaderboardPage = () => {
   }, []);
 
   const getRankBadge = (rank) => {
-    if (rank === 1) return { text: "🥇", color: "#ffd700", textShadow: "0 0 10px rgba(255,215,0,0.5)" };
-    if (rank === 2) return { text: "🥈", color: "#c0c0c0", textShadow: "0 0 10px rgba(192,192,192,0.5)" };
-    if (rank === 3) return { text: "🥉", color: "#cd7f32", textShadow: "0 0 10px rgba(205,127,50,0.5)" };
-    return { text: `#${rank}`, color: "#b0a9df", textShadow: "none" };
+    if (rank === 1) return { text: "1st", color: "#ffd700", textShadow: "0 0 10px rgba(255,215,0,0.3)" };
+    if (rank === 2) return { text: "2nd", color: "#c0c0c0", textShadow: "0 0 10px rgba(192,192,192,0.3)" };
+    if (rank === 3) return { text: "3rd", color: "#cd7f32", textShadow: "0 0 10px rgba(205,127,50,0.3)" };
+    return { text: `${rank}`, color: "#b0a9df", textShadow: "none" };
   };
 
   const activeStandings = data[activeTab] || [];
@@ -49,7 +49,7 @@ const LeaderboardPage = () => {
               onClick={() => setActiveTab("combined")}
               style={{ padding: "10px 5px", fontSize: "13px" }}
             >
-              👑 Combined
+              Combined
             </button>
             <button
               type="button"
@@ -57,7 +57,7 @@ const LeaderboardPage = () => {
               onClick={() => setActiveTab("math")}
               style={{ padding: "10px 5px", fontSize: "13px" }}
             >
-              ⚡ Math Speedrun
+              Math Speedrun
             </button>
             <button
               type="button"
@@ -65,7 +65,7 @@ const LeaderboardPage = () => {
               onClick={() => setActiveTab("dino")}
               style={{ padding: "10px 5px", fontSize: "13px" }}
             >
-              🦖 Dino Run
+              Dino Run
             </button>
             <button
               type="button"
@@ -73,7 +73,7 @@ const LeaderboardPage = () => {
               onClick={() => setActiveTab("marketmaker")}
               style={{ padding: "10px 5px", fontSize: "13px" }}
             >
-              📊 Market Maker
+              Market Maker
             </button>
           </div>
 
@@ -87,7 +87,7 @@ const LeaderboardPage = () => {
               <p style={{ fontSize: "13px", marginTop: "5px" }}>Be the first to secure a spot on the standings by playing a game.</p>
             </div>
           ) : (
-            <div className="review-table-container" style={{ margin: 0, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", overflow: "hidden" }}>
+            <div className="review-table-container" style={{ margin: 0, background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
               <table className="review-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -130,7 +130,7 @@ const LeaderboardPage = () => {
                             <td style={{ padding: "14px 10px", color: "#b0a9df", fontSize: "13.5px" }}>{user.scores.math || "-"}</td>
                             <td style={{ padding: "14px 10px", color: "#b0a9df", fontSize: "13.5px" }}>{user.scores.dino || "-"}</td>
                             <td style={{ padding: "14px 10px", color: "#b0a9df", fontSize: "13.5px" }}>
-                              {user.scores.marketmaker ? `$${user.scores.marketmaker.toLocaleString()}` : "-"}
+                              {user.scores.marketmaker !== undefined ? user.scores.marketmaker : "-"}
                             </td>
                           </>
                         )}

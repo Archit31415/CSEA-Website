@@ -17,36 +17,17 @@ export const GamesPage = () => {
   const [dinoHighScore, setDinoHighScore] = useState(0);
   const [mmHighScore, setMmHighScore] = useState(0);
 
-  // Sync high scores from localStorage & server when page mounts or when activeGame changes
+  // Fetch high scores from server database on mount / game selection changes
   useEffect(() => {
-    const localMath = parseInt(localStorage.getItem("twenty_in_two_high_score") || "0", 10);
-    const localDino = parseInt(localStorage.getItem("chrome_dino_high_score") || "0", 10);
-    const localMm = parseInt(localStorage.getItem("csea_market_maker_high_score") || "0", 10);
-
-    setMathHighScore(localMath);
-    setDinoHighScore(localDino);
-    setMmHighScore(localMm);
     window.scrollTo(0, 0);
 
     fetch("http://localhost:3000/auth/status", { credentials: "include" })
       .then(res => res.json())
       .then(data => {
         if (data.isAuthenticated && data.scores) {
-          if (typeof data.scores.math === "number") {
-            const bestMath = Math.max(localMath, data.scores.math);
-            setMathHighScore(bestMath);
-            localStorage.setItem("twenty_in_two_high_score", bestMath.toString());
-          }
-          if (typeof data.scores.dino === "number") {
-            const bestDino = Math.max(localDino, data.scores.dino);
-            setDinoHighScore(bestDino);
-            localStorage.setItem("chrome_dino_high_score", bestDino.toString());
-          }
-          if (typeof data.scores.marketmaker === "number") {
-            const bestMm = Math.max(localMm, data.scores.marketmaker);
-            setMmHighScore(bestMm);
-            localStorage.setItem("csea_market_maker_high_score", bestMm.toString());
-          }
+          setMathHighScore(data.scores.math || 0);
+          setDinoHighScore(data.scores.dino || 0);
+          setMmHighScore(data.scores.marketmaker || 0);
         }
       })
       .catch(err => console.error("Error fetching GamesPage server scores:", err));
@@ -88,7 +69,7 @@ export const GamesPage = () => {
               {/* Card 1: 20 in 2 */}
               <div className="game-card">
                 <div>
-                  <span className="game-icon">⚡</span>
+                  <span className="game-icon"></span>
                   <h3>20 in 2 Math Speedrun</h3>
                   <p>
                     Solve 20 addition, subtraction, multiplication, and division problems within 2 minutes. Focus on speed and accuracy. Correct answers add points, wrong answers deduct them!
@@ -107,7 +88,7 @@ export const GamesPage = () => {
               {/* Card 2: Chrome Dino */}
               <div className="game-card dino-card">
                 <div>
-                  <span className="game-icon">🦖</span>
+                  <span className="game-icon"></span>
                   <h3>CSEA Dino Run</h3>
                   <p>
                     A customized browser dinosaur side-scroller. Run through the desert landscape, jump over cacti, duck under flying birds, and survive the day/night cycle as speed escalates.
@@ -126,7 +107,7 @@ export const GamesPage = () => {
               {/* Card 3: Market Maker */}
               <div className="game-card">
                 <div>
-                  <span className="game-icon">📊</span>
+                  <span className="game-icon"></span>
                   <h3>CSEA Market Maker</h3>
                   <p>
                     A real-time simulated order book trading game! Trade contracts on Fermi estimation questions. Quoting limit orders to bots while managing inventory risk and reacting to hints.

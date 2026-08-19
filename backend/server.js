@@ -646,15 +646,46 @@ app.get("/api/leaderboard", async (req, res) => {
       ]
     }).select("name email scores");
 
+    // Extract scores to calculate min/max per game (only considering active scores > 0)
+    const mathScores = allUsers.map(u => u.scores.math || 0).filter(s => s > 0);
+    const dinoScores = allUsers.map(u => u.scores.dino || 0).filter(s => s > 0);
+    const mmScores = allUsers.map(u => u.scores.marketmaker || 0).filter(s => s > 0);
+
+    const minMath = mathScores.length > 0 ? Math.min(...mathScores) : 0;
+    const maxMath = mathScores.length > 0 ? Math.max(...mathScores) : 0;
+
+    const minDino = dinoScores.length > 0 ? Math.min(...dinoScores) : 0;
+    const maxDino = dinoScores.length > 0 ? Math.max(...dinoScores) : 0;
+
+    const minMM = mmScores.length > 0 ? Math.min(...mmScores) : 0;
+    const maxMM = mmScores.length > 0 ? Math.max(...mmScores) : 0;
+
+    const scaleScore = (val, min, max) => {
+      if (val <= 0) return 0;
+      if (max === min) return 1000;
+      return ((val - min) / (max - min)) * 1000;
+    };
+
     const combined = allUsers.map(u => {
       const mathScore = u.scores.math || 0;
       const dinoScore = u.scores.dino || 0;
       const mmScore = u.scores.marketmaker || 0;
-      const totalScore = (mathScore * 250) + dinoScore + Math.max(0, Math.round(mmScore / 2));
+
+      const scaledMath = scaleScore(mathScore, minMath, maxMath);
+      const scaledDino = scaleScore(dinoScore, minDino, maxDino);
+      const scaledMM = scaleScore(mmScore, minMM, maxMM);
+
+      const totalScore = scaledMath + scaledDino + scaledMM;
+
       return {
         name: u.name,
         email: u.email,
-        scores: u.scores,
+        scores: {
+          math: Math.round(scaledMath),
+          dino: Math.round(scaledDino),
+          marketmaker: Math.round(scaledMM)
+        },
+        rawScores: u.scores,
         totalScore
       };
     })

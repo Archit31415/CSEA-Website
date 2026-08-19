@@ -343,7 +343,7 @@ export const ChromeDino = () => {
         state.particles.push({
           x: 100,
           y: 200 - state.dinoY - 20,
-          text: "🚀 DOUBLE JUMP!",
+          text: "DOUBLE JUMP!",
           color: "#b026ff",
           life: 40
         });
@@ -575,10 +575,10 @@ export const ChromeDino = () => {
           ) {
             if (pow.type === "SHIELD") {
               state.hasShield = true;
-              state.particles.push({ x: dinoX, y: dinoBoxY - 15, text: "🛡️ CYBER SHIELD!", color: "#00f2fe", life: 45 });
+              state.particles.push({ x: dinoX, y: dinoBoxY - 15, text: "CYBER SHIELD!", color: "#00f2fe", life: 45 });
             } else if (pow.type === "DOUBLE_JUMP") {
               state.canDoubleJump = true;
-              state.particles.push({ x: dinoX, y: dinoBoxY - 15, text: "🚀 DOUBLE JUMP!", color: "#b026ff", life: 45 });
+              state.particles.push({ x: dinoX, y: dinoBoxY - 15, text: "DOUBLE JUMP!", color: "#b026ff", life: 45 });
             } else if (pow.type === "STAR") {
               state.score += 50;
               state.particles.push({ x: dinoX, y: dinoBoxY - 15, text: "+50 STAR GEM!", color: "#ffd700", life: 45 });
@@ -603,7 +603,7 @@ export const ChromeDino = () => {
           ) {
             if (state.hasShield) {
               state.hasShield = false;
-              state.particles.push({ x: dinoX, y: dinoBoxY - 15, text: "🛡️ SHIELD ABSORBED!", color: "#ff1744", life: 45 });
+              state.particles.push({ x: dinoX, y: dinoBoxY - 15, text: "SHIELD ABSORBED!", color: "#ff1744", life: 45 });
               state.obstacles = state.obstacles.filter((o) => o !== obs);
             } else {
               state.isGameOver = true;
@@ -687,7 +687,7 @@ export const ChromeDino = () => {
         ctx.font = "bold 10px sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(pow.type === "SHIELD" ? "🛡️" : pow.type === "DOUBLE_JUMP" ? "🚀" : "💎", pow.x + 12, pow.y + 12);
+        ctx.fillText(pow.type === "SHIELD" ? "S" : pow.type === "DOUBLE_JUMP" ? "J" : "D", pow.x + 12, pow.y + 12);
         ctx.restore();
       });
 
@@ -799,7 +799,7 @@ export const ChromeDino = () => {
               boxShadow: "0 0 8px #00f2fe",
               fontSize: "12px",
               color: "#fff"
-            }}>🛡️</span>
+            }}>S</span>
             <span><b>Shield:</b> Protects against 1 obstacle hit</span>
           </div>
           <div className="powerup-item" style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#a49fc6" }}>
@@ -814,7 +814,7 @@ export const ChromeDino = () => {
               boxShadow: "0 0 8px #b026ff",
               fontSize: "12px",
               color: "#fff"
-            }}>🚀</span>
+            }}>J</span>
             <span><b>Double Jump:</b> Enables mid-air extra jump</span>
           </div>
           <div className="powerup-item" style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#a49fc6" }}>
@@ -829,7 +829,7 @@ export const ChromeDino = () => {
               boxShadow: "0 0 8px #ffd700",
               fontSize: "12px",
               color: "#fff"
-            }}>💎</span>
+            }}>D</span>
             <span><b>Star Gem:</b> +50 bonus points</span>
           </div>
         </div>

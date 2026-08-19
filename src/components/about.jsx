@@ -99,7 +99,6 @@ export const About = (props) => {
   };
 
   const titleStyle = {
-    fontSize: "48px",
     fontWeight: "700",
     color: "#1e293b",
     marginBottom: "24px",
@@ -119,7 +118,6 @@ export const About = (props) => {
   };
 
   const paragraphStyle = {
-    fontSize: "18px",
     lineHeight: "1.8",
     color: "#475569",
     marginBottom: "32px",
@@ -127,7 +125,6 @@ export const About = (props) => {
   };
 
   const highlightTextStyle = {
-    fontSize: "20px",
     lineHeight: "1.7",
     color: "#1e293b",
     fontWeight: "500",
@@ -144,6 +141,9 @@ export const About = (props) => {
     gap: "32px",
     marginTop: "40px",
     flexWrap: "wrap",
+    transform: isVisible ? "translateY(0)" : "translateY(50px)",
+    opacity: isVisible ? 1 : 0,
+    transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s",
   };
 
   const statItemStyle = {
@@ -210,16 +210,16 @@ export const About = (props) => {
           {/* Text Column */}
           <div style={textColumnStyle}>
             <div ref={aboutRef} style={aboutTextStyle}>
-              <h2 style={titleStyle}>
+              <h2 className="about-title" style={titleStyle}>
                 About Us
                 <div style={titleUnderlineStyle}></div>
               </h2>
               
-              <p style={paragraphStyle}>
+              <p className="about-paragraph" style={paragraphStyle}>
                 {props.data ? props.data.paragraph : "Loading our story..."}
               </p>
               
-              <div style={highlightTextStyle}>
+              <div className="about-highlight-text" style={highlightTextStyle}>
                 We're the team behind the fun and learning in the CSE department, organizing everything from Fresher's and Farewell parties to academic talks. We also organize a myriad of fun events and intra-branch sports tournaments.
               </div>
 
