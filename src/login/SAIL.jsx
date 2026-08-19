@@ -11,13 +11,14 @@ export const scroll = new SmoothScroll('a[href*="#"]', {
 });
 
 const containerStyle = {
-    padding: "30px",
+    padding: "30px 15px",
     backgroundColor: "#f8fafc",
     minHeight: "100vh"
 };
 
 const filtersContainerStyle = {
     display: "flex",
+    flexWrap: "wrap",
     gap: "20px",
     marginBottom: "30px",
     padding: "25px",
@@ -122,13 +123,15 @@ const contactCardContainerStyle = {
 
 const cardNavigationStyle = {
     display: "flex",
+    flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: "20px",
     padding: "16px 20px",
     backgroundColor: "#f8fafc",
     borderRadius: "12px",
-    border: "1px solid #e2e8f0"
+    border: "1px solid #e2e8f0",
+    gap: "10px"
 };
 
 const navButtonStyle = {
@@ -563,7 +566,7 @@ const SAIL = () => {
 
                 {/* Table */}
                 <div style={tableContainerStyle}>
-                    <div style={{ maxHeight: "600px", overflowY: "auto" }}>
+                    <div style={{ maxHeight: "600px", overflowY: "auto", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
                         <table style={tableStyle}>
                             <thead style={{ position: "sticky", top: "0", zIndex: "10" }}>
                                 <tr>

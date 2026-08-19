@@ -8,6 +8,20 @@ const eventSchema = new mongoose.Schema({
     event_name: {
         type: String,
         required: true
+    },
+    status: {
+        type: String,
+        default: 'past'
+    },
+    category: {
+        type: String,
+        default: 'academic'
+    },
+    date: {
+        type: String
+    },
+    registrationLink: {
+        type: String
     }
 });
 
