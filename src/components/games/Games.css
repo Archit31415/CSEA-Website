@@ -1,15 +1,19 @@
 /* CSEA Website Games Section CSS */
 
 .games-page {
+  position: relative;
   background: linear-gradient(135deg, #02020a 0%, #0c0822 50%, #150630 100%);
   min-height: 100vh;
   color: #f1f1f1;
   font-family: "Open Sans", sans-serif;
   padding-top: 120px;
   padding-bottom: 60px;
+  overflow: hidden;
 }
 
 .games-container {
+  position: relative;
+  z-index: 2;
   max-width: 1000px;
   margin: 0 auto;
   padding: 20px;

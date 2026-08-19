@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { Navigation as MainNavigation } from "./navigation";
 import { Navigation as StudentNavigation } from "../login/navigation";
+import Particle from "../login/Particle";
 import TwentyInTwo from "./games/TwentyInTwo";
 import ChromeDino from "./games/ChromeDino";
 import MarketMaker from "./games/MarketMaker";
@@ -43,6 +44,7 @@ export const GamesPage = () => {
 
   return (
     <div className="games-page">
+      <Particle />
       {isStudentCorner ? <StudentNavigation /> : <MainNavigation />}
       
       <div className="games-container">
