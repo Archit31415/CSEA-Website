@@ -87,7 +87,6 @@ export const Testimonials = (props) => {
   };
 
   const titleStyle = {
-    fontSize: "48px",
     fontWeight: "700",
     color: "#ffffff",
     marginBottom: "16px",
@@ -118,7 +117,6 @@ export const Testimonials = (props) => {
   const mainImageContainerStyle = {
     position: "relative",
     width: "100%",
-    height: "600px",
     borderRadius: "24px",
     overflow: "hidden",
     marginBottom: "40px",
@@ -291,7 +289,7 @@ export const Testimonials = (props) => {
       
       <div className="container">
         <div style={sectionTitleStyle} ref={galleryRef}>
-          <h2 style={titleStyle}>Gallery</h2>
+          <h2 className="gallery-section-title" style={titleStyle}>Gallery</h2>
           <p style={subtitleStyle}>
             Explore our collection of memorable moments and events
           </p>
@@ -299,7 +297,7 @@ export const Testimonials = (props) => {
 
         <div style={galleryContainerStyle}>
           {/* Main Image Display */}
-          <div style={mainImageContainerStyle}>
+          <div className="gallery-main-image-container" style={mainImageContainerStyle}>
             <img
               src={getImageUrl(currentImage.original || currentImage.url)}
               alt={currentImage.description || `Gallery image ${currentIndex + 1}`}

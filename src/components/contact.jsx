@@ -104,7 +104,7 @@ export const Contact = (props) => {
                 {props.data ? props.data.address : "loading"}
               </p>
             </div>
-          
+
             <div className="contact-item">
               <p>
                 <span>
@@ -135,7 +135,7 @@ export const Contact = (props) => {
         <div className="container text-center">
           <p>
             &copy; 2023 CSEA
-            
+
           </p>
         </div>
       </div>

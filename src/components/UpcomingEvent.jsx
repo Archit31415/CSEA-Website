@@ -28,8 +28,15 @@ export const UpcomingEvent = () => {
         const response = await fetch("http://localhost:3000/events");
         const data = await response.json();
         
-        // Filter to find upcoming events
-        const upcomingEvents = data.filter(e => e.status === "upcoming");
+        // Filter to find upcoming events whose date has not passed
+        const upcomingEvents = data.filter(e => {
+          if (e.status !== "upcoming") return false;
+          const parsed = Date.parse(e.date);
+          if (isNaN(parsed)) return false;
+          const eventDate = new Date(parsed);
+          const endOfEventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate(), 23, 59, 59, 999);
+          return endOfEventDay >= new Date();
+        });
         
         if (upcomingEvents.length > 0) {
           // Sort chronologically ascending (closest upcoming event first)
@@ -99,7 +106,7 @@ export const UpcomingEvent = () => {
 
   const imageColStyle = {
     flex: "1",
-    minWidth: "320px",
+    minWidth: "280px",
     position: "relative",
   };
 
@@ -113,7 +120,6 @@ export const UpcomingEvent = () => {
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.2)",
-    height: "450px", // Match maximum height to prevent layout shifting
   };
 
   const imgStyle = {
@@ -126,11 +132,10 @@ export const UpcomingEvent = () => {
 
   const contentColStyle = {
     flex: "1.2",
-    minWidth: "320px",
+    minWidth: "280px",
   };
 
   const titleStyle = {
-    fontSize: "38px",
     fontWeight: "800",
     lineHeight: "1.2",
     marginBottom: "16px",
@@ -207,6 +212,7 @@ export const UpcomingEvent = () => {
           <div style={imageColStyle}>
             <Zoom>
               <div 
+                className="upcoming-event-image-wrapper"
                 style={imageWrapperStyle}
                 onMouseEnter={(e) => {
                   const img = e.currentTarget.querySelector("img");
@@ -232,7 +238,7 @@ export const UpcomingEvent = () => {
           {/* Details Column */}
           <div style={contentColStyle}>
             <div>
-              <h2 style={titleStyle}>{event.event_name}</h2>
+              <h2 className="upcoming-event-title" style={titleStyle}>{event.event_name}</h2>
               
               <div style={metaRowStyle}>
                 <div style={metaItemStyle}>

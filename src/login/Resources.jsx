@@ -46,7 +46,8 @@ const Resource = () => {
   };
 
   const semesterBlockStyle = {
-    width: "200px",
+    width: "100%",
+    maxWidth: "200px",
     height: "200px",
     backgroundColor: "#ffffff",
     border: "3px solid #e2e8f0",
@@ -120,8 +121,9 @@ const Resource = () => {
 
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "32px",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: "20px",
+    justifyItems: "center",
     maxWidth: "1000px",
     margin: "0 auto",
     padding: "0 20px",

@@ -10,9 +10,9 @@ const calculateStatus = (dateStr) => {
     
     const eventDate = new Date(parsed);
     const now = new Date();
-    // End of the event month
-    const endOfMonth = new Date(eventDate.getFullYear(), eventDate.getMonth() + 1, 0, 23, 59, 59, 999);
-    return endOfMonth < now ? 'past' : 'upcoming';
+    // End of the specific event day (23:59:59.999)
+    const endOfEventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate(), 23, 59, 59, 999);
+    return endOfEventDay < now ? 'past' : 'upcoming';
 };
 
 router.get('/', async (req, res) => {

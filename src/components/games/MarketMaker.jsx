@@ -262,6 +262,21 @@ export const MarketMaker = () => {
     }, 3000);
   };
 
+  // Sync server high score on mount
+  useEffect(() => {
+    fetch("http://localhost:3000/auth/status", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        if (data.isAuthenticated && data.scores && typeof data.scores.marketmaker === "number") {
+          const currentLocal = parseInt(localStorage.getItem("csea_market_maker_high_score") || "0", 10);
+          const best = Math.max(currentLocal, data.scores.marketmaker);
+          setHighScore(best);
+          localStorage.setItem("csea_market_maker_high_score", best.toString());
+        }
+      })
+      .catch(err => console.error("Error fetching market maker server high score:", err));
+  }, []);
+
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -318,30 +333,49 @@ export const MarketMaker = () => {
   }, [timeRemaining, gameState, round, questions]);
 
   const startNewGame = () => {
-    const selected = generateDynamicQuestions();
-    setQuestions(selected);
-    setRound(1);
-    setCash(STARTING_CASH);
-    setInventory(0);
-    setRoundHistory([]);
-    startRound(1, selected, STARTING_CASH);
+    fetch("http://localhost:3000/api/game/marketmaker/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include"
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setQuestions(data.questions);
+        setRound(1);
+        setCash(STARTING_CASH);
+        setInventory(0);
+        setRoundHistory([]);
+        startRound(1, data.questions, STARTING_CASH);
+      } else {
+        const clientQs = generateDynamicQuestions();
+        setQuestions(clientQs);
+        setRound(1);
+        setCash(STARTING_CASH);
+        setInventory(0);
+        setRoundHistory([]);
+        startRound(1, clientQs, STARTING_CASH);
+      }
+    })
+    .catch(err => {
+      console.error("Market Maker start error:", err);
+      const clientQs = generateDynamicQuestions();
+      setQuestions(clientQs);
+      setRound(1);
+      setCash(STARTING_CASH);
+      setInventory(0);
+      setRoundHistory([]);
+      startRound(1, clientQs, STARTING_CASH);
+    });
   };
 
   const startRound = (roundNum, selectedQuestions, currentCash) => {
     const activeQuestions = selectedQuestions || questions;
     const currentQ = activeQuestions[roundNum - 1];
-    const trueAns = currentQ.answer;
+    const initialEst = (currentQ && currentQ.initialEstimate) ? currentQ.initialEstimate : Math.max(25, Math.floor(40 + Math.random() * 120));
 
-    // Initialize botCenter away from true answer with noise
-    // Variance is scaled by the size of the answer
-    const direction = Math.random() > 0.5 ? 1 : -1;
-    const devPct = 0.2 + Math.random() * 0.25; // 20% to 45% deviation
-    const offset = Math.round(trueAns * devPct * direction);
-    const startCenter = Math.max(15, trueAns + offset);
-
-    setBotCenter(startCenter);
-    // Initial spread starts wide, roughly 20-30% of valuation
-    const startSpread = Math.max(8, Math.round(startCenter * (0.2 + Math.random() * 0.1)));
+    setBotCenter(initialEst);
+    const startSpread = Math.max(8, Math.round(initialEst * (0.2 + Math.random() * 0.1)));
     setCurrentSpread(startSpread);
 
     setTimeRemaining(ROUND_TIME);
@@ -352,19 +386,17 @@ export const MarketMaker = () => {
     setActiveLimitAsk(null);
     setToasts([]);
     
-    // Clear old trades, place an initial print
     setTrades([
       {
         id: generateId(),
         time: ROUND_TIME,
-        price: startCenter,
+        price: initialEst,
         type: "bot"
       }
     ]);
 
     setGameState(GAME_STATE.PLAYING);
 
-    // Round countdown timer
     if (gameTimerRef.current) clearInterval(gameTimerRef.current);
     gameTimerRef.current = setInterval(() => {
       setTimeRemaining((prev) => {
@@ -376,38 +408,86 @@ export const MarketMaker = () => {
       });
     }, 1000);
 
-    // Bot/Order book simulation timer
     if (simTimerRef.current) clearInterval(simTimerRef.current);
     simTimerRef.current = setInterval(() => {
-      tickSimulation(trueAns);
+      tickSimulation(initialEst);
     }, 500);
   };
 
-  const settleRound = (trueAns, currentQ) => {
-    setGameState(GAME_STATE.ROUND_END);
-    
-    const valueSettled = inventory * trueAns;
-    const finalCash = cash + valueSettled;
-    const prevSettledCash = roundHistory.length > 0 
-      ? roundHistory[roundHistory.length - 1].settledCash 
-      : STARTING_CASH;
-    const profit = finalCash - prevSettledCash;
-    
-    setRoundHistory((prevHist) => [
-      ...prevHist,
-      {
-        round: round,
-        question: currentQ.question,
-        trueAnswer: trueAns,
-        finalInventory: inventory,
-        startingCash: prevSettledCash,
-        settledCash: finalCash,
-        profit: profit
+  const settleRound = (trueAnsPlaceholder, currentQ) => {
+    const doLocalSettle = () => {
+      const trueAns = currentQ ? (currentQ.trueAnswer || currentQ.answer || 100) : 100;
+      const inv = Math.max(-15, Math.min(15, inventory));
+      const settledVal = inv * trueAns;
+      const finalCash = cash + settledVal;
+      const prevCash = roundHistory.length > 0 ? roundHistory[roundHistory.length - 1].settledCash : STARTING_CASH;
+      const profit = finalCash - prevCash;
+      const isGameOver = round >= 5;
+      const netProfit = finalCash - STARTING_CASH;
+
+      setGameState(GAME_STATE.ROUND_END);
+      setRoundHistory((prevHist) => [
+        ...prevHist,
+        {
+          round: round,
+          question: currentQ ? currentQ.question : "",
+          trueAnswer: trueAns,
+          finalInventory: inv,
+          startingCash: cash,
+          settledCash: finalCash,
+          profit: profit
+        }
+      ]);
+      setCash(finalCash);
+      setInventory(0);
+
+      if (isGameOver && netProfit > highScore) {
+        setHighScore(netProfit);
+        localStorage.setItem("csea_market_maker_high_score", netProfit.toString());
       }
-    ]);
-    
-    setCash(finalCash);
-    setInventory(0);
+    };
+
+    fetch("http://localhost:3000/api/game/marketmaker/settle-round", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        roundNum: round,
+        finalInventory: inventory,
+        cashBeforeSettlement: cash
+      }),
+      credentials: "include"
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setGameState(GAME_STATE.ROUND_END);
+        setRoundHistory((prevHist) => [
+          ...prevHist,
+          {
+            round: round,
+            question: currentQ ? currentQ.question : "",
+            trueAnswer: data.trueAnswer,
+            finalInventory: inventory,
+            startingCash: cash,
+            settledCash: data.settledCash,
+            profit: data.profit
+          }
+        ]);
+        setCash(data.settledCash);
+        setInventory(0);
+
+        if (data.isGameOver && data.netProfit > highScore) {
+          setHighScore(data.netProfit);
+          localStorage.setItem("csea_market_maker_high_score", data.netProfit.toString());
+        }
+      } else {
+        doLocalSettle();
+      }
+    })
+    .catch(err => {
+      console.error("Settlement error:", err);
+      doLocalSettle();
+    });
   };
 
   const nextRound = () => {
@@ -417,49 +497,47 @@ export const MarketMaker = () => {
       startRound(nextR, questions, cash);
     } else {
       setGameState(GAME_STATE.GAMEOVER);
-      const endCash = cash;
-      const netProfit = endCash - STARTING_CASH;
-      if (netProfit > highScore) {
-        setHighScore(netProfit);
-        localStorage.setItem("csea_market_maker_high_score", netProfit.toString());
-      }
     }
   };
 
   // Bot updates and execution check
-  const tickSimulation = (trueAns) => {
+  const tickSimulation = (targetEst) => {
     setTimeRemaining((currentTime) => {
       setBotCenter((prevCenter) => {
-        // Convergence rate determines how fast bot estimates move to true answer.
-        // It accelerates as time ticks down and hints are revealed.
-        let convRate = 0.05; // 5% per tick default
-        let noiseScale = 0.04;
+        const currentQ = questions[round - 1];
+        const trueAns = currentQ ? (currentQ.trueAnswer || currentQ.answer || targetEst) : targetEst;
+
+        let activeTarget = targetEst;
+        let convRate = 0.08;
+        let noiseScale = 0.02;
 
         if (currentTime <= 30) {
-          convRate = 0.18; // fast convergence near end
-          noiseScale = 0.01;
+          activeTarget = trueAns;
+          convRate = 0.25;
+          noiseScale = 0.003;
         } else if (currentTime <= 60) {
-          convRate = 0.10; // medium convergence
-          noiseScale = 0.02;
+          activeTarget = Math.round(targetEst + 0.65 * (trueAns - targetEst));
+          convRate = 0.15;
+          noiseScale = 0.01;
         }
 
-        const dev = trueAns - prevCenter;
+        const dev = activeTarget - prevCenter;
         const convergenceStep = dev * convRate;
-        const noise = (Math.random() - 0.5) * trueAns * noiseScale;
+        const noise = (Math.random() - 0.5) * activeTarget * noiseScale;
         const nextCenter = Math.max(5, Math.round(prevCenter + convergenceStep + noise));
 
         // Spread decays over time from wide to narrow
         setCurrentSpread((prevSpread) => {
-          const minSpread = Math.max(2, Math.round(trueAns * 0.015)); // converges down to 1.5% spread
-          const progress = currentTime / ROUND_TIME; // 1.0 down to 0
-          const startSpread = Math.round(trueAns * 0.25);
+          const minSpread = Math.max(2, Math.round(targetEst * 0.025));
+          const progress = currentTime / ROUND_TIME;
+          const startSpread = Math.round(targetEst * 0.22);
           return Math.max(minSpread, Math.round(startSpread * progress + minSpread));
         });
 
         // Check player's limit order fills using the actual book spread
         const progress = currentTime / ROUND_TIME; // 1.0 down to 0
-        const startSpread = Math.round(trueAns * 0.25);
-        const minSpread = Math.max(2, Math.round(trueAns * 0.015));
+        const startSpread = Math.round(targetEst * 0.25);
+        const minSpread = Math.max(2, Math.round(targetEst * 0.015));
         const fillSpread = Math.max(minSpread, Math.round(startSpread * progress + minSpread));
         
         // LIMIT BID FILL CHECK (Player wants to Buy at price X)
@@ -751,18 +829,18 @@ export const MarketMaker = () => {
   };
 
   const getRankDetails = (netProfit) => {
-    if (netProfit < 0) return { title: "Liquidated Intern 📉", color: "#ff1744", desc: "Ouch. The order book was too quick, or estimation was off-market. Don't worry, even Ken Griffin had tough days. Try again!" };
-    if (netProfit < 500) return { title: "Junior Trader 💼", color: "#ffb199", desc: "Solid risk control! You ended green, but there's room to quote tighter spreads and capture more volume." };
-    if (netProfit < 1500) return { title: "Market Maker Associate 📈", color: "#00f2fe", desc: "Impressive! You managed your inventory well and reacted quickly to hint arrivals. You're ready for the desk." };
-    if (netProfit < 3000) return { title: "VP of Quantitative Trading 🚀", color: "#e040fb", desc: "Exceptional! High execution fill rates and outstanding estimation. Optiver recruiters are looking for you." };
-    return { title: "Citadel / Jane Street Partner 👑", color: "#00e676", desc: "Absolute master of liquidity! Flawless inventory shading and perfect estimation bounds. You are the market." };
+    if (netProfit < 0) return { title: "Liquidated Intern", color: "#ff1744", desc: "Ouch. The order book was too quick, or estimation was off-market. Don't worry, even Ken Griffin had tough days. Try again!" };
+    if (netProfit < 500) return { title: "Junior Trader", color: "#ffb199", desc: "Solid risk control! You ended green, but there's room to quote tighter spreads and capture more volume." };
+    if (netProfit < 1500) return { title: "Market Maker Associate", color: "#00f2fe", desc: "Impressive! You managed your inventory well and reacted quickly to hint arrivals. You're ready for the desk." };
+    if (netProfit < 3000) return { title: "VP of Quantitative Trading", color: "#e040fb", desc: "Exceptional! High execution fill rates and outstanding estimation. Optiver recruiters are looking for you." };
+    return { title: "Citadel / Jane Street Partner", color: "#00e676", desc: "Absolute master of liquidity! Flawless inventory shading and perfect estimation bounds. You are the market." };
   };
 
   // Clipboard copy Share stats
   const handleShare = () => {
     const netProfit = cash - STARTING_CASH;
     const rank = getRankDetails(netProfit).title;
-    const text = `📊 CSEA Arcade: Quant Market Maker Challenge 📊\nRank: ${rank}\nFinal P&L: $${netProfit.toLocaleString()}\nHigh Score: $${highScore.toLocaleString()}\nCan you make a better spread? Play at CSEA Arcade!`;
+    const text = `CSEA Arcade: Quant Market Maker Challenge\nRank: ${rank}\nFinal P&L: $${netProfit.toLocaleString()}\nHigh Score: $${highScore.toLocaleString()}\nCan you make a better spread? Play at CSEA Arcade!`;
     navigator.clipboard.writeText(text).then(() => {
       alert("Results copied to clipboard! Share it with your friends.");
     }).catch(() => {
@@ -783,7 +861,7 @@ export const MarketMaker = () => {
 
       {gameState === GAME_STATE.START && (
         <div className="mm-start-screen">
-          <span className="game-icon">📊</span>
+          <span className="game-icon"></span>
           <h3>CSEA Market Maker</h3>
           <p className="mm-start-subtitle">
             A fast-paced quantitative trading game. Trade contracts against bots based on mathematical estimations and lock in profits.
@@ -796,40 +874,40 @@ export const MarketMaker = () => {
                 className={`mm-onboarding-tab-btn ${onboardingTab === "goal" ? "active" : ""}`}
                 onClick={() => setOnboardingTab("goal")}
               >
-                🎯 1. The Goal
+                1. The Goal
               </button>
               <button
                 type="button"
                 className={`mm-onboarding-tab-btn ${onboardingTab === "trading" ? "active" : ""}`}
                 onClick={() => setOnboardingTab("trading")}
               >
-                🔄 2. How to Trade
+                2. How to Trade
               </button>
               <button
                 type="button"
                 className={`mm-onboarding-tab-btn ${onboardingTab === "intel" ? "active" : ""}`}
                 onClick={() => setOnboardingTab("intel")}
               >
-                💡 3. Hints & Bots
+                3. Hints & Bots
               </button>
               <button
                 type="button"
                 className={`mm-onboarding-tab-btn ${onboardingTab === "risk" ? "active" : ""}`}
                 onClick={() => setOnboardingTab("risk")}
               >
-                ⚖️ 4. Risk & Limits
+                4. Risk & Limits
               </button>
             </div>
 
             <div className="mm-onboarding-content">
               {onboardingTab === "goal" && (
                 <div className="mm-onboarding-pane">
-                  <h4>🎯 The Basic Goal</h4>
+                  <h4>The Basic Goal</h4>
                   <p>
                     You are trading contracts of an asset. The <b>True Value</b> of each contract is the exact numerical answer to a math/probability question.
                   </p>
                   <div className="onboarding-example-box">
-                    <h5>💡 Profit Example:</h5>
+                    <h5>Profit Example:</h5>
                     <p>
                       Suppose the question's true answer is <b>120</b>:
                     </p>
@@ -843,20 +921,20 @@ export const MarketMaker = () => {
 
               {onboardingTab === "trading" && (
                 <div className="mm-onboarding-pane">
-                  <h4>🔄 Order Types (How to Trade)</h4>
+                  <h4>Order Types (How to Trade)</h4>
                   <p>
                     You can trade with the market makers (bots) in two different ways:
                   </p>
                   <div className="onboarding-split-grid">
                     <div className="onboarding-column">
-                      <h5>⚡ Market Orders (Instant)</h5>
+                      <h5>Market Orders (Instant)</h5>
                       <p>
                         Click <b>Mkt Buy</b> or <b>Mkt Sell</b> to trade instantly at the bots' current prices.
                       </p>
                       <span className="onboarding-badge info">Fast but expensive (pays the spread)</span>
                     </div>
                     <div className="onboarding-column">
-                      <h5>📈 Limit Orders (Market Making)</h5>
+                      <h5>Limit Orders (Market Making)</h5>
                       <p>
                         Type a price and post a <b>Limit Bid</b> (buy) or <b>Limit Ask</b> (sell). Your quotes will sit in the Order Book.
                       </p>
@@ -868,21 +946,21 @@ export const MarketMaker = () => {
 
               {onboardingTab === "intel" && (
                 <div className="mm-onboarding-pane">
-                  <h4>💡 Hints & Bot Strategy</h4>
+                  <h4>Hints & Bot Strategy</h4>
                   <p>
                     Bots trade based on estimation. At the start of the round, they quote wide prices because they are uncertain.
                   </p>
                   <ul>
                     <li><b>Hints Arrive:</b> At <b>T-60s</b> and <b>T-30s</b>, hints about the true answer are revealed.</li>
                     <li><b>Convergence:</b> With each hint, bots update their prices to get closer and closer to the true answer.</li>
-                    <li><b>⚠️ Adverse Selection (Stale Quote Risk):</b> When a new hint drops, bots will instantly trade against any old Limit Orders you left in the book. <b>Cancel/update your limits quickly (Press [C] or Esc)</b>!</li>
+                    <li><b>Adverse Selection (Stale Quote Risk):</b> When a new hint drops, bots will instantly trade against any old Limit Orders you left in the book. <b>Cancel/update your limits quickly (Press [C] or Esc)</b>!</li>
                   </ul>
                 </div>
               )}
 
               {onboardingTab === "risk" && (
                 <div className="mm-onboarding-pane">
-                  <h4>⚖️ Inventory & Risk Management</h4>
+                  <h4>Inventory & Risk Management</h4>
                   <ul>
                     <li><b>Inventory:</b> Your position in contracts. Buying increases it (`+`), selling decreases it (`-`).</li>
                     <li><b>Risk Limit:</b> You can hold a maximum of <b>±15 contracts</b>. Managing this inventory risk is crucial so you don't get stuck at the limit!</li>
@@ -928,7 +1006,7 @@ export const MarketMaker = () => {
           <div className="mm-question-panel">
             <div className="mm-panel-header">Asset Description (True Value)</div>
             <div className="mm-question-body">
-              {questions[round - 1].question}
+              {questions[round - 1]?.question || "Loading asset description..."}
             </div>
           </div>
 
@@ -1049,16 +1127,16 @@ export const MarketMaker = () => {
                   {/* Time-locked hints */}
                   <div className="hints-section">
                     <div className={`hint-item ${timeRemaining <= 60 ? "unlocked" : "locked"}`}>
-                      <span className="hint-indicator">⚡ T-60 Hint:</span>
+                      <span className="hint-indicator">T-60 Hint:</span>
                       <span className="hint-text">
-                        {timeRemaining <= 60 ? questions[round - 1].hint1 : "Revealing in " + Math.max(0, timeRemaining - 60) + "s..."}
+                        {timeRemaining <= 60 ? (questions[round - 1]?.hint1 || "Revealed!") : "Revealing in " + Math.max(0, timeRemaining - 60) + "s..."}
                       </span>
                     </div>
 
                     <div className={`hint-item ${timeRemaining <= 30 ? "unlocked" : "locked"}`}>
-                      <span className="hint-indicator">⚡ T-30 Hint:</span>
+                      <span className="hint-indicator">T-30 Hint:</span>
                       <span className="hint-text">
-                        {timeRemaining <= 30 ? questions[round - 1].hint2 : "Revealing in " + Math.max(0, timeRemaining - 30) + "s..."}
+                        {timeRemaining <= 30 ? (questions[round - 1]?.hint2 || "Revealed!") : "Revealing in " + Math.max(0, timeRemaining - 30) + "s..."}
                       </span>
                     </div>
                   </div>
@@ -1118,7 +1196,7 @@ export const MarketMaker = () => {
           <h3>Round {round} Settlement</h3>
           
           <div className="settlement-question-review">
-            <b>{questions[round - 1].question}</b>
+            <b>{questions[round - 1]?.question || "Round Settlement"}</b>
           </div>
 
           <div className="settlement-grid">
@@ -1237,7 +1315,7 @@ export const MarketMaker = () => {
         <div className="mm-help-overlay" onClick={() => setShowHelpModal(false)}>
           <div className="mm-help-modal" onClick={(e) => e.stopPropagation()}>
             <div className="mm-help-header">
-              <h4>📊 Market Maker Cheat Sheet</h4>
+              <h4>Market Maker Cheat Sheet</h4>
               <button type="button" className="mm-help-close-btn" onClick={() => setShowHelpModal(false)}>&times;</button>
             </div>
             <div className="mm-help-content">
